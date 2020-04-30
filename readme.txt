@@ -1,0 +1,17 @@
+Does not support:
+    - union
+    - auto
+    - register
+    - static
+    - extern
+    - const
+    - enum
+    - typedef
+    - volatile
+    - complex
+    - imaginary
+    - varargs using ...
+    - restrict
+    - inline
+    - ternary expressions () ? :
+    - do {} while ()

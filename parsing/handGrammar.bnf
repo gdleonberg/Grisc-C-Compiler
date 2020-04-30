@@ -1,0 +1,144 @@
+
+%token RETURN IDENTIFIER CONSTANT INT CHAR STRING_LITERAL
+%token MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN ADD_ASSIGN SUB_ASSIGN LEFT_ASSIGN RIGHT_ASSIGN AND_ASSIGN XOR_ASSIGN OR_ASSIGN
+%token EOF
+%start program
+
+program
+    : external_statement external_statement_group
+    ;
+
+external_statement_group
+    : external_statement external_statement_group
+    | EOF
+    ;
+
+external_statement
+    : function_declaration
+    | variable_declaration
+    ;
+
+variable_declaration
+    : type IDENTIFIER assignment ';'
+    | type IDENTIFIER ';'
+    ;
+
+function_declaration
+    : type IDENTIFIER '(' argument_list ')' '{' statement_group return_statement '}'
+    ;
+
+argument_list
+    : argument ',' argument_list_prime
+    | argument
+    | epsilon
+    ;
+
+argument_list_prime
+    : argument ',' argument_list
+    ;
+
+argument
+    : type IDENTIFIER
+    ;
+
+statement_group
+    : statement statement_group
+    | epsilon
+    ;
+
+"""
+Any number of statement is written as:
+
+statement_group
+    : statement statement_group
+    | epsilon
+    ;
+"""
+
+"""
+At least one statement is written as:
+
+statement_group
+    : statement statement_group_prme
+    ;
+
+statement_group_prime
+    : statement statement_group_prime
+    | epsilon
+    ;
+"""
+
+statement
+    : assignment ';'
+    ;
+
+return_statement
+    : RETURN expression ';'
+    ;
+
+type
+    : INT
+    | CHAR
+    | IDENTIFIER
+    ;
+
+assignment
+    : assignment_operator expression
+    ;
+
+assignment_operator
+	: '='
+	| MUL_ASSIGN
+	| DIV_ASSIGN
+	| MOD_ASSIGN
+	| ADD_ASSIGN
+	| SUB_ASSIGN
+	| LEFT_ASSIGN
+	| RIGHT_ASSIGN
+	| AND_ASSIGN
+	| XOR_ASSIGN
+	| OR_ASSIGN
+	;
+
+expression
+   : term expression_prime
+   ;
+
+expression_prime
+    : '+' term expression_prime
+    | '-' term expression_prime
+    | epsilon
+    ;
+
+term
+    : factor term_prime
+    ;
+
+term_prime
+    : '*' factor term_prime
+    | '/' factor term_prime
+    | '%' factor term_prime
+    | epsilon
+    ;
+
+factor
+    : '(' expression ')'
+    | value
+    ;
+
+value
+    : plus_or_minus CONSTANT
+    | IDENTIFIER
+    | STRING_LITERAL
+    ;
+
+plus_or_minus
+    : '+'
+    | '-'
+    | epsilon
+    ;
+
+pointer
+	: '*' pointer
+    | '*'
+	;
