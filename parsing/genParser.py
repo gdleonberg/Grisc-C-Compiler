@@ -14,6 +14,7 @@ def generateFromBnf(outFilename, inFilename, debugPrintsInParser):
         
         self.tokens = tokens
         self.currTokenNum = 0
+        self.parseTree = []
         
     def empty(self):
         return (self.currTokenNum == len(self.tokens))
@@ -94,7 +95,7 @@ def generateFromBnf(outFilename, inFilename, debugPrintsInParser):
             if firstParse == "":
                 print("Unspecified first production rule!")
                 quit()
-            rulesFile.write("return self." + firstParse + "(0)\n\n")
+            rulesFile.write("return self." + firstParse + "(0), self.parseTree\n\n")
             
             # use production rules to write recursive-descent functions in rules file
             for prod_rule in prod_rules: 
