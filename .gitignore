@@ -1,0 +1,12 @@
+# the log directory
+logs
+
+# vscode stuff
+.vscode
+language.code-workspace
+
+# auto-generated parser
+parsing/autoGenParser.py
+
+# any pycache
+**/__pycache__

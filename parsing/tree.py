@@ -1,22 +1,3 @@
-def updateDepth(node, depth):
-    node.depth = depth
-    for child in node.getChildren():
-        updateDepth(child, depth + 1)
-
-def prune(node, depth):
-    retVal = 0
-    for child in node.getChildren():
-        retVal += prune(child, depth + 1)
-    if len(node.getChildren()) == 0:
-        print((depth * "\t") + "Node has no children: " + node.toString())
-        if (node.value == [None, None, None, None, None]):
-            print((depth * "\t") + "Node has empty value")
-            if node.getParent() != None:
-                print((depth * "\t") + "Node has parent. Pruning...")
-                node.parent.removeChild(node)
-                retVal += 1
-    return retVal
-
 class tree:
 
     def __init__(self, rule, subRule, value):
@@ -42,9 +23,14 @@ class tree:
 
         # update all child node depths in the subtree
         for childNode in child.getChildren():
-            updateDepth(childNode, self.depth)
+            childNode.updateDepth(child.depth)
 
         self.children.append(child)
+
+    def updateDepth(self, depth):
+        self.depth = depth
+        for child in self.getChildren():
+            child.updateDepth(depth + 1)
 
     def getDepth(self):
         return self.depth

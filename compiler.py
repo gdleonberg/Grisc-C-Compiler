@@ -5,9 +5,12 @@ import lexing.lexer as lexer
 import parsing.tokenConverter as tokenConverter
 import parsing.genParser as genParser
 import parsing.tree as tree
+import parsing.cstToAst as cstToAst
 
+# store old stdout for print redirection
 old_stdout = sys.stdout
 
+# get command line arguments
 inFilename = sys.argv[1]
 outFilename = sys.argv[2]
 parserDebug = False
@@ -15,7 +18,7 @@ if len(sys.argv) > 3:
     parserDebug = True
 
 # generate parser from bnf
-genParser.generateFromBnf("autoGenParser.py", "grammar.bnf", parserDebug)
+genParser.generateFromBnf("autoGenParser.py", "grammars/grammar.bnf", parserDebug)
 import parsing.autoGenParser as autoGenParser
 
 # resolve all includes and get final lexed program
@@ -28,7 +31,7 @@ with open(outFilename + ".lexed", "w") as outFile:
                     + " : " + "{0:<15s}".format(token[4]) + "\n")
 """
 
-## feed to parser to make CST and then AST
+## feed to parser to make CST
 ## (https://dev.to/lefebvre/compilers-102---parser-2gni)
 tokens = tokenConverter.tokenConverter(tokens).convert()
 """
@@ -53,7 +56,7 @@ pprintedParseTree = new_stdout.getvalue()
 
 new_stdout = io.StringIO()
 sys.stdout = new_stdout
-while(tree.prune(parseTree, 0)):
+while(cstToAst.prune(parseTree, 0)):
     pass
 pruneLog = new_stdout.getvalue()
 
@@ -72,14 +75,23 @@ with open("logs/parse.log", "w") as log:
 with open("logs/CST.log", "w") as log:
     log.write(pprintedParseTreePruned)
 
-#cst = myParser.genCst()
-#ast = myParser.genAst(cst)
+
+
+# make AST from CST
+ast = cstToAst.toAst(parseTree)
+new_stdout = io.StringIO()
+sys.stdout = new_stdout
+ast.pprint()
+astText = new_stdout.getvalue()
+with open("logs/AST.log", "w") as log:
+    log.write(astText)
+sys.stdout = old_stdout
 
 
 
-
-with open(outFilename, "w") as outFile:
-    outFile.write(str(parseTree))
+# print final generated code
+#with open(outFilename, "w") as outFile:
+#    outFile.write(str(parseTree))
 
 ## feed parsed program to semantic analyzer to check for errors,
 ## analyze type stuff for symbol table, and add implicit nodes to AST
