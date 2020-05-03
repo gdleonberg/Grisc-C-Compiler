@@ -4,7 +4,7 @@
 
   * Proof-of-concept
 
-  * Very time and meory inefficient, I have no desire to improve performance and have not taken any compiler classes
+  * Very time and memory inefficient, I have no desire to improve performance and have not taken any compiler classes
 
   * Intended to Support full C99 language features except the list below.
 
