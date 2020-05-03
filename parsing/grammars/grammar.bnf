@@ -1,0 +1,204 @@
+
+%token RETURN IDENTIFIER CONSTANT INT CHAR STRING_LITERAL
+%token MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN ADD_ASSIGN SUB_ASSIGN LEFT_ASSIGN RIGHT_ASSIGN AND_ASSIGN XOR_ASSIGN OR_ASSIGN
+%token EOF
+%token STRUCT
+%token SHORT LONG SIGNED UNSIGNED
+%token FLOAT DOUBLE VOID BOOL
+
+"""
+need to add ternary, typedef, enum, do while, const union, multiple declaration by comma,
+multiple declaration with optional assins by comma, typedef an anonymous struct
+"""
+%token TYPEDEF ENUM DO CONST UNION
+%start program
+
+program
+    : external_statement external_statement_group
+    ;
+
+external_statement_group
+    : external_statement external_statement_group
+    | EOF
+    ;
+
+external_statement
+    : function_declaration
+    | variable_declarations_and_optional_assignments ';'
+    | struct_declaration ';'
+    ;
+
+struct_declaration
+    : STRUCT IDENTIFIER '{' struct_member_list '}'
+    ;
+
+struct_member_list
+    : variable_declarations_and_no_assignments ';' struct_member_list_prime
+    ;
+
+struct_member_list_prime
+    : variable_declarations_and_optional_assignments ';' struct_member_list_prime
+    | epsilon
+    ;
+
+variable_declarations_and_no_assignments
+    : total_type pointer_optional IDENTIFIER array_optional variable_declarations_and_optional_assignments_prime
+    ;
+
+variable_declarations_and_no_assignments_prime
+    : ',' pointer_optional IDENTIFIER array_optional variable_declarations_and_optional_assignments_prime
+    | epsilon
+    ;
+
+variable_declarations_and_optional_assignments
+    : total_type pointer_optional IDENTIFIER array_optional optional_assignment variable_declarations_and_optional_assignments_prime
+    ;
+
+variable_declarations_and_optional_assignments_prime
+    : ',' pointer_optional IDENTIFIER array_optional optional_assignment variable_declarations_and_optional_assignments_prime
+    | epsilon
+    ;
+
+function_declaration
+    : total_type IDENTIFIER '(' argument_list ')' '{' statement_group return_statement '}'
+    ;
+
+argument_list
+    : argument argument_list_prime
+    | epsilon
+    ;
+
+argument_list_prime
+    : ',' argument argument_list_prime
+    | epsilon
+    ;
+
+argument
+    : total_type pointer_optional identifier_optional array_optional
+    ;
+
+identifier_optional
+    : IDENTIFIER
+    | epsilon
+    ;
+
+pointer_optional
+    : '*' pointer_optional
+    | epsilon
+    ;
+
+array_optional
+    : '[' CONSTANT ']' array_optional
+    | '[' ']' array_optional
+    | epsilon
+    ;
+
+statement_group
+    : statement statement_group
+    | epsilon
+    ;
+
+statement
+    : IDENTIFIER assignment ';'
+    | variable_declarations_and_optional_assignments ';'
+    | struct_declaration ';'
+    ;
+
+return_statement
+    : RETURN expression ';'
+    ;
+
+total_type
+    : type_qualifier_list type
+    | STRUCT IDENTIFIER
+    ;
+
+type_qualifier_list
+    : type_qualifier type_qualifier_list
+    | epsilon
+    ;
+
+type_qualifier
+    : SHORT
+    | LONG
+    | SIGNED
+    | UNSIGNED
+    ;
+
+type
+    : INT
+    | CHAR
+    | SHORT
+    | LONG
+    | FLOAT
+    | DOUBLE
+    | VOID
+    | BOOL
+    | IDENTIFIER
+    ;
+
+assignment
+    : assignment_operator expression
+    ;
+
+optional_assignment
+    : assignment
+    | epsilon
+    ;
+
+assignment_operator
+	: '='
+	| MUL_ASSIGN
+	| DIV_ASSIGN
+	| MOD_ASSIGN
+	| ADD_ASSIGN
+	| SUB_ASSIGN
+	| LEFT_ASSIGN
+	| RIGHT_ASSIGN
+	| AND_ASSIGN
+	| XOR_ASSIGN
+	| OR_ASSIGN
+	;
+
+expression
+   : term expression_prime
+   ;
+
+expression_prime
+    : '+' term expression_prime
+    | '-' term expression_prime
+    | epsilon
+    ;
+
+term
+    : factor term_prime
+    ;
+
+term_prime
+    : '*' factor term_prime
+    | '/' factor term_prime
+    | '%' factor term_prime
+    | epsilon
+    ;
+
+factor
+    : '(' expression ')'
+    | value
+    ;
+
+value
+    : plus_or_minus CONSTANT
+    | IDENTIFIER
+    | STRING_LITERAL
+    ;
+
+plus_or_minus
+    : '+'
+    | '-'
+    | epsilon
+    ;
+
+pointer
+	: '*' pointer
+    | '*'
+	;
