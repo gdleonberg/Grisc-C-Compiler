@@ -1,5 +1,9 @@
 import os
 
+"""
+https://www.cis.upenn.edu/~matuszek/General/recursive-descent-parsing.html
+"""
+
 def generateFromBnf(outFilename, inFilename, debugPrintsInParser):
     
     path = os.path.abspath(__file__)
@@ -8,13 +12,14 @@ def generateFromBnf(outFilename, inFilename, debugPrintsInParser):
         with open((dir_path + "\\" + outFilename).replace("\\", "/"), "w") as rulesFile:
             
             rulesFile.write(
-"""class parser:
+"""
+import parsing.tree as tree
+class parser:
     
     def __init__(self, tokens):
         
         self.tokens = tokens
         self.currTokenNum = 0
-        self.parseTree = []
         
     def empty(self):
         return (self.currTokenNum == len(self.tokens))
@@ -95,20 +100,21 @@ def generateFromBnf(outFilename, inFilename, debugPrintsInParser):
             if firstParse == "":
                 print("Unspecified first production rule!")
                 quit()
-            rulesFile.write("return self." + firstParse + "(0), self.parseTree\n\n")
+            rulesFile.write("return self." + firstParse + "(0)\n\n")
             
             # use production rules to write recursive-descent functions in rules file
             for prod_rule in prod_rules: 
             
                 rulesFile.write("    def parse_" + prod_rule[0] + "(self, nestLevel):\n\n")
                 if debugPrintsInParser:
-                    rulesFile.write("        print((nestLevel * \"--\") + \"parse_" + prod_rule[0] + " at token \" + str(self.currToken()))\n")
-                rulesFile.write("        retFlag = False\n\n")
+                    rulesFile.write("        print((nestLevel * \"  \") + \"parse_" + prod_rule[0] + " at token \" + str(self.currToken()))\n")
+                rulesFile.write("        retFlag = False\n")
+                rulesFile.write("        retTree = tree.tree(\"" + prod_rule[0] + "\", \"\", [None, None, None, None, None])\n\n")
                 for rule in prod_rule[1]:
                     rulesFile.write("        # trying rule: " + " ".join(rule) + "\n")
                     if debugPrintsInParser:
                         rulesFile.write("        if not retFlag:\n")
-                        rulesFile.write("            print(((nestLevel + 1) * \"--\") + \"Trying rule: " + " ".join(rule) + "\")\n\n")
+                        rulesFile.write("            print(((nestLevel + 1) * \"  \") + \"Trying rule: " + " ".join(rule) + "\")\n\n")
                     rulesFile.write("        oldTokenNum = self.getCurrTokenNum()\n\n")
                     for expectedTokenNum in range(0, len(rule)):
                         expectedToken = rule[expectedTokenNum]
@@ -119,47 +125,56 @@ def generateFromBnf(outFilename, inFilename, debugPrintsInParser):
                             rulesFile.write("        if retFlag:\n")
                             
                         if expectedToken == "epsilon":
-                            rulesFile.write("            retFlag = True\n\n")
+                            rulesFile.write("            retFlag = True\n")
+                            rulesFile.write("            retTree.addChildNode(\"" + prod_rule[0] + "\", \"epsilon\", [None, None, None, None, None])\n\n")
                         elif expectedToken.isupper() and ("'" not in expectedToken):
                             if expectedToken in token_rules:
                                 rulesFile.write("            token = self.getToken()\n")
                                 rulesFile.write("            if token[1] != \"" + expectedToken + "\":\n")
                                 rulesFile.write("                self.putToken(token)\n")
                                 rulesFile.write("                retFlag = False\n")
+                                rulesFile.write("                retTree.reset()\n")
                                 rulesFile.write("            else:\n")
                                 if debugPrintsInParser:
-                                    rulesFile.write("                print(((nestLevel + 2) * \"--\") + \"Matched expected type '" + expectedToken + "' with token\" + str(self.prevToken()))\n")
-                                rulesFile.write("                retFlag = True\n\n")
+                                    rulesFile.write("                print(((nestLevel + 2) * \"  \") + \"Matched expected type '" + expectedToken + "' with token\" + str(self.prevToken()))\n")
+                                rulesFile.write("                retFlag = True\n")
+                                rulesFile.write("                retTree.addChildNode(\"" + prod_rule[0] + "\", \"" + expectedToken + "\", self.prevToken())\n\n")
                             else:
                                 print("Undefined token type " + expectedToken + " used in production rule " + str(prod_rule))
                                 quit()
                         elif "'" not in expectedToken:
                             rulesFile.write("            backupTokenNum = self.getCurrTokenNum()\n")
                             if debugPrintsInParser:
-                                rulesFile.write("            print(((nestLevel + 2) * \"--\") + \"Calling parse_" + expectedToken + "\")\n")
-                            rulesFile.write("            if not self.parse_" + expectedToken + "(nestLevel + 3):\n")
+                                rulesFile.write("            print(((nestLevel + 2) * \"  \") + \"Calling parse_" + expectedToken + "\")\n")
+                            rulesFile.write("            ruleResult, ruleTree = self.parse_" + expectedToken + "(nestLevel + 3)\n")
+                            rulesFile.write("            if not ruleResult:\n")
                             rulesFile.write("                self.setCurrTokenNum(backupTokenNum)\n")
                             #if debugPrintsInParser:
-                            #    rulesFile.write("                print(((nestLevel + 2) * \"--\") + \"Failed. Re-winding and trying next production rule\")\n")
+                            #    rulesFile.write("                print(((nestLevel + 2) * \"  \") + \"Failed. Re-winding and trying next production rule\")\n")
                             rulesFile.write("                retFlag = False\n")
+                            rulesFile.write("                retTree.reset()\n")
                             rulesFile.write("            else:\n")
                             if debugPrintsInParser:
-                                    rulesFile.write("                print(((nestLevel + 2) * \"--\") + \"Matched grammar rule '" + expectedToken + "' with token\" + str(self.prevToken()))\n")
-                            rulesFile.write("                retFlag = True\n\n")
+                                    rulesFile.write("                print(((nestLevel + 2) * \"  \") + \"Matched grammar rule '" + expectedToken + "' with token\" + str(self.prevToken()))\n")
+                            rulesFile.write("                retFlag = True\n")
+                            rulesFile.write("                retTree.addChildTree(ruleTree)\n\n")
                         else:
                             rulesFile.write("            token = self.getToken()\n")
                             rulesFile.write("            if token[0] != " + expectedToken + ":\n")
                             rulesFile.write("                self.putToken(token)\n")
                             rulesFile.write("                retFlag = False\n")
+                            rulesFile.write("                retTree.reset()\n")
                             rulesFile.write("            else:\n")
                             if debugPrintsInParser:
-                                    rulesFile.write("                print(((nestLevel + 2) * \"--\") + \"Matched expected value " + expectedToken + " with token\" + str(self.prevToken()))\n")
-                            rulesFile.write("                retFlag = True\n\n")
+                                    rulesFile.write("                print(((nestLevel + 2) * \"  \") + \"Matched expected value " + expectedToken + " with token\" + str(self.prevToken()))\n")
+                            rulesFile.write("                retFlag = True\n")
+                            rulesFile.write("                retTree.addChildNode(\"" + prod_rule[0] + "\", \"" + expectedToken + "\", self.prevToken())\n\n")
                             
                     rulesFile.write("        if not retFlag:\n")
                     rulesFile.write("            self.setCurrTokenNum(oldTokenNum)\n")
+                    rulesFile.write("            retTree.reset()\n")
                     if debugPrintsInParser:
-                        rulesFile.write("            print(((nestLevel + 2) * \"--\") + \"Failed. Re-winding and trying next production rule\")\n")
+                        rulesFile.write("            print(((nestLevel + 2) * \"  \") + \"Failed. Re-winding and trying next production rule\")\n")
                     rulesFile.write("        else:\n")
-                    rulesFile.write("            return retFlag\n")
-                    rulesFile.write("\n")
+                    rulesFile.write("            return retFlag, retTree\n\n")
+                rulesFile.write("        return retFlag, retTree\n\n")

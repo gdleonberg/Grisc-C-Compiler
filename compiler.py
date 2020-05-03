@@ -1,8 +1,12 @@
 import sys
+import io
 import lexing.preProcessor as preProcessor
 import lexing.lexer as lexer
 import parsing.tokenConverter as tokenConverter
 import parsing.genParser as genParser
+import parsing.tree as tree
+
+old_stdout = sys.stdout
 
 inFilename = sys.argv[1]
 outFilename = sys.argv[2]
@@ -11,7 +15,6 @@ if len(sys.argv) > 3:
     parserDebug = True
 
 # generate parser from bnf
-#genRules.generateFromBnf("autoGenParser.py", "handGrammar.bnf", parserDebug)
 genParser.generateFromBnf("autoGenParser.py", "grammar.bnf", parserDebug)
 import parsing.autoGenParser as autoGenParser
 
@@ -37,11 +40,43 @@ with open(outFilename + ".converted", "w") as outFile:
 """
 
 myParser = autoGenParser.parser(tokens)
-parseStatus, parseTree = myParser.parse()
 
+new_stdout = io.StringIO()
+sys.stdout = new_stdout
+parseStatus, parseTree = myParser.parse()
+parseDebugLog = new_stdout.getvalue()
+
+new_stdout = io.StringIO()
+sys.stdout = new_stdout
+parseTree.pprint()
+pprintedParseTree = new_stdout.getvalue()
+
+new_stdout = io.StringIO()
+sys.stdout = new_stdout
+while(tree.prune(parseTree, 0)):
+    pass
+pruneLog = new_stdout.getvalue()
+
+new_stdout = io.StringIO()
+sys.stdout = new_stdout
+parseTree.pprint()
+pprintedParseTreePruned = new_stdout.getvalue()
+
+sys.stdout = old_stdout
 print("Parse: " + str(parseStatus))
+
+with open("logs/parse.log", "w") as log:
+    log.write(parseDebugLog)
+    log.write("\n\n\n")
+    log.write("Parse: " + str(parseStatus))
+with open("logs/CST.log", "w") as log:
+    log.write(pprintedParseTreePruned)
+
 #cst = myParser.genCst()
 #ast = myParser.genAst(cst)
+
+
+
 
 with open(outFilename, "w") as outFile:
     outFile.write(str(parseTree))
