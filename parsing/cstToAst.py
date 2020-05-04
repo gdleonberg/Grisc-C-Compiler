@@ -18,17 +18,23 @@ def prune(node, depth):
 def flattenRepetition(node):
     retVal = 0
 
+    repFlag = True
+    while repFlag:
+        repFlag = False
+        for child in node.getChildren():
+            retValAdd = flattenRepetition(child)
+            retVal += retValAdd
+            if retValAdd != 0:
+                repFlag = True
+
     for i, child in enumerate(node.getChildren()):
-        if child.rule == node.rule + "_prime":
+        if (child.rule == node.rule + "_prime"):# or (child.rule == node.rule):
             print("At node: " + node.toString() + " Flattening " + child.toString())
-            temp = copy.deepcopy(child.children)
+            temp = copy.copy(child.children)
             for newChild in temp:
                 newChild.updateDepth(node.depth + 1)
             node.children = node.children[:i] + temp  + node.children[i+1:]
             retVal += 1
-
-    for child in node.getChildren():
-        retVal += flattenRepetition(child)
 
     return retVal
 
@@ -40,17 +46,19 @@ def removeSuperfluousGrouping(node):
 def removeSingleSuccessors(node):
     retVal = 0
 
-    for i, child in enumerate(node.getChildren()):
-        if child.rule == node.rule + "_prime":
-            print("At node: " + node.toString() + " Flattening " + child.toString())
-            temp = copy.deepcopy(child.children)
-            for newChild in temp:
-                newChild.updateDepth(node.depth + 1)
-            node.children = node.children[:i] + temp  + node.children[i+1:]
-            retVal += 1
+    # if the node only has one child, replace itself with the child
+    flag = True
+    while flag:
+        flag = False
+        if len(node.children) == 1:
+            node.become(node.children[0])
+            node.updateDepth(node.depth)
+            flag = True
 
-    for child in node.getChildren():
-        retVal += flattenRepetition(child)
+    # call recursively on each child
+    else:
+        for child in node.children:
+            removeSingleSuccessors(child)
 
     return retVal
 
@@ -62,11 +70,13 @@ def toAst(cst):
         pass
 
     # remove all superfluous parantheses and curly braces
-    while(removeSuperfluousGrouping(ast)):
-        pass
+    #while(removeSuperfluousGrouping(ast)):
+    #    pass
 
     # remove all single-sucessor nodes
     while(removeSingleSuccessors(ast)):
         pass
+
+    cst.updateDepth(0)
 
     return ast

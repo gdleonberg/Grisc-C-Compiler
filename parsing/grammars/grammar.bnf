@@ -4,7 +4,7 @@
 %token EOF
 %token STRUCT
 %token SHORT LONG SIGNED UNSIGNED
-%token FLOAT DOUBLE VOID BOOL
+%token FLOAT DOUBLE VOID BOOL STATIC
 
 """
 need to add ternary, typedef, enum, do while, const union, multiple declaration by comma,
@@ -123,6 +123,7 @@ type_qualifier
     | LONG
     | SIGNED
     | UNSIGNED
+    | STATIC
     ;
 
 type

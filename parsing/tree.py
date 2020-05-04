@@ -8,6 +8,12 @@ class tree:
         self.children = []
         self.depth = 0
 
+    def become(self, node):
+        self.rule = node.rule
+        self.subRule = node.subRule
+        self.value = node.value
+        self.children = node.children
+        
     def reset(self):
         self.children = []
 
@@ -41,12 +47,16 @@ class tree:
     def getChildren(self):
         return self.children
 
-    def removeChild(self, childRef):
-        print("Node: " + self.toString() + " Removing child: " + childRef.toString())
+    def findChild(self, childRef):
         childIndex = -1
-        for i, child in enumerate(self.getChildren()):
+        for i, child in enumerate(self.children):
             if child is childRef:
                 childIndex = i
+        return childIndex
+
+    def removeChild(self, childRef):
+        print("Node: " + self.toString() + " Removing child: " + childRef.toString())
+        childIndex = self.findChild(childRef) 
         if childIndex != -1:
             print("Child found at index " + str(childIndex))
             print(self.children)

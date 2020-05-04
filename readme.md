@@ -1,20 +1,17 @@
-  # Stripped-Down C99 Compiler for GRISC ISA
+  # Stripped-Down ANSI C (C89) Compiler for GRISC ISA
 
   ###### (Uses self auto-generated recursive descent with backtracking parser)
 
   * Proof-of-concept
 
-  * Very time and memory inefficient, I have no desire to improve performance and have not taken any compiler classes
+  * Very time and memory inefficient, I have no desire to improve performance of compiler or of generated assembly
 
-  * Intended to Support full C99 language features except the list below.
+  * Intended to support all ANSI C (C89) language features except the list below.
 
-    * auto
-    * register
-    * static
+    * auto (unnecesarry)
+    * register (only exists to guide compiler optimization)
     * extern
-    * volatile
-    * complex
-    * imaginary
+    * volatile (due to lack of optimizations all variables are already treated as volatile)
     * varargs using ...
-    * restrict
-    * inline
+
+  * Adds C99-style single line comments using '//'

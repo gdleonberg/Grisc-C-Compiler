@@ -36,6 +36,7 @@ class tokenConverter:
             ["UNSIGNED", ["unsigned", ["reserved_word"]]], 
             ["FLOAT", ["float", ["reserved_word"]]], 
             ["DOUBLE", ["double", ["reserved_word"]]],
+            ["STATIC", ["static", ["reserved_word"]]],
             ["VOID", ["void", ["reserved_word"]]],
             ["BOOL", ["bool", ["reserved_word"]]],
             ["STRUCT", ["struct", ["reserved_word"]]],
