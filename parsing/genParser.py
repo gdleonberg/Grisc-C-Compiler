@@ -109,7 +109,7 @@ class parser:
                 if debugPrintsInParser:
                     rulesFile.write("        print((nestLevel * \"  \") + \"parse_" + prod_rule[0] + " at token \" + str(self.currToken()))\n")
                 rulesFile.write("        retFlag = False\n")
-                rulesFile.write("        retTree = tree.tree(\"" + prod_rule[0] + "\", \"\", [None, None, None, None, None])\n\n")
+                rulesFile.write("        retTree = tree.tree(\"" + prod_rule[0] + "\", None, [None, None, None, None, None])\n\n")
                 for rule in prod_rule[1]:
                     rulesFile.write("        # trying rule: " + " ".join(rule) + "\n")
                     if debugPrintsInParser:

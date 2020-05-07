@@ -14,18 +14,18 @@ multiple declaration with optional assins by comma, typedef an anonymous struct
 %start program
 
 program
-    : external_statement external_statement_group
-    ;
-
-external_statement_group
-    : external_statement external_statement_group
-    | EOF
+    : external_statement external_statement_prime
     ;
 
 external_statement
     : function_declaration
     | variable_declarations_and_optional_assignments ';'
     | struct_declaration ';'
+    ;
+
+external_statement_prime
+    : external_statement external_statement_prime
+    | EOF
     ;
 
 struct_declaration
@@ -37,16 +37,16 @@ struct_member_list
     ;
 
 struct_member_list_prime
-    : variable_declarations_and_optional_assignments ';' struct_member_list_prime
+    : variable_declarations_and_no_assignments ';' struct_member_list_prime
     | epsilon
     ;
 
 variable_declarations_and_no_assignments
-    : total_type pointer_optional IDENTIFIER array_optional variable_declarations_and_optional_assignments_prime
+    : total_type pointer_optional IDENTIFIER array_optional variable_declarations_and_no_assignments_prime
     ;
 
 variable_declarations_and_no_assignments_prime
-    : ',' pointer_optional IDENTIFIER array_optional variable_declarations_and_optional_assignments_prime
+    : ',' pointer_optional IDENTIFIER array_optional variable_declarations_and_no_assignments_prime
     | epsilon
     ;
 
@@ -60,7 +60,7 @@ variable_declarations_and_optional_assignments_prime
     ;
 
 function_declaration
-    : total_type IDENTIFIER '(' argument_list ')' '{' statement_group return_statement '}'
+    : total_type IDENTIFIER '(' argument_list ')' '{' statement_prime return_statement '}'
     ;
 
 argument_list
@@ -83,18 +83,29 @@ identifier_optional
     ;
 
 pointer_optional
-    : '*' pointer_optional
+    : '*' pointer_optional_prime
+    | epsilon
+    ;
+
+pointer_optional_prime
+    : '*' pointer_optional_prime
     | epsilon
     ;
 
 array_optional
-    : '[' CONSTANT ']' array_optional
-    | '[' ']' array_optional
+    : '[' CONSTANT ']' array_optional_prime
+    | '[' ']' array_optional_prime
     | epsilon
     ;
 
-statement_group
-    : statement statement_group
+array_optional_prime
+    : '[' CONSTANT ']' array_optional_prime
+    | '[' ']' array_optional_prime
+    | epsilon
+    ;
+
+statement_prime
+    : statement statement_prime
     | epsilon
     ;
 
@@ -114,7 +125,12 @@ total_type
     ;
 
 type_qualifier_list
-    : type_qualifier type_qualifier_list
+    : type_qualifier type_qualifier_list_prime
+    | epsilon
+    ;
+
+type_qualifier_list_prime
+    : type_qualifier type_qualifier_list_prime
     | epsilon
     ;
 
@@ -200,6 +216,10 @@ plus_or_minus
     ;
 
 pointer
-	: '*' pointer
-    | '*'
+	: '*' pointer_prime
 	;
+
+pointer_prime
+    : '*' pointer_prime
+    | epsilon
+    ;

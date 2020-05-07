@@ -81,7 +81,7 @@ with open("logs/CST.log", "w") as log:
 ast = cstToAst.toAst(parseTree)
 new_stdout = io.StringIO()
 sys.stdout = new_stdout
-ast.pprint()
+ast.pprint(False)
 astText = new_stdout.getvalue()
 with open("logs/AST.log", "w") as log:
     log.write(astText)

@@ -6,77 +6,70 @@ def prune(node, depth):
     for child in node.getChildren():
         retVal += prune(child, depth + 1)
     if node.getChildren() == []:
-        print((depth * "\t") + "Node has no children: " + node.toString())
         if node.value == [None, None, None, None, None]:
-            print((depth * "\t") + "Node has empty value")
             if node.getParent() != None:
-                print((depth * "\t") + "Node has parent. Pruning...")
                 node.parent.removeChild(node)
                 retVal += 1
     return retVal
 
 def flattenRepetition(node):
-    retVal = 0
 
-    repFlag = True
-    while repFlag:
-        repFlag = False
-        for child in node.getChildren():
-            retValAdd = flattenRepetition(child)
-            retVal += retValAdd
-            if retValAdd != 0:
-                repFlag = True
+    # if child rule ends in _prime and subRule is None and value[0] is None, replace child with its children
+    flag = True
+    while flag:
+        flag = False
+        for i, child in enumerate(node.children):
+            if child.rule.endswith("_prime") and (child.subRule is None) and (child.value[0] is None) and (len(child.children) != 0):
+                node.children = node.children[:i] + node.children[i].children + node.children[i+1:]
+                flag = True
+                break
 
-    for i, child in enumerate(node.getChildren()):
-        if (child.rule == node.rule + "_prime"):# or (child.rule == node.rule):
-            print("At node: " + node.toString() + " Flattening " + child.toString())
-            temp = copy.copy(child.children)
-            for newChild in temp:
-                newChild.updateDepth(node.depth + 1)
-            node.children = node.children[:i] + temp  + node.children[i+1:]
-            retVal += 1
+    # work top down
+    for child in node.children:
+        flattenRepetition(child)
 
-    return retVal
+def removeSuperfluousGroupingAndSeperators(node):
+    
+    flag = True
+    while flag:
+        flag = False 
+        for i in range(0, len(node.children)):
+            if (node.children[i].value[0] in ['{', '}', '(', ')', ';', ',']) or (node.rule == "EOF"):
+                del node.children[i]
+                flag = True
+                break
 
-def removeSuperfluousGrouping(node):
-    retVal = 0
-
-    return retVal
+    for child in node.children:
+        removeSuperfluousGroupingAndSeperators(child)
 
 def removeSingleSuccessors(node):
-    retVal = 0
 
-    # if the node only has one child, replace itself with the child
     flag = True
     while flag:
         flag = False
         if len(node.children) == 1:
             node.become(node.children[0])
-            node.updateDepth(node.depth)
             flag = True
 
-    # call recursively on each child
-    else:
-        for child in node.children:
-            removeSingleSuccessors(child)
-
-    return retVal
+    for child in node.children:
+        removeSingleSuccessors(child)
 
 def toAst(cst):
     ast = copy.deepcopy(cst)
 
-    # flatten all repetition that's represented as recursion
-    while(flattenRepetition(ast)):
+    # remove all superfluous parantheses and curly braces
+    removeSuperfluousGroupingAndSeperators(ast)
+
+    while(prune(ast, 0)):
         pass
 
-    # remove all superfluous parantheses and curly braces
-    #while(removeSuperfluousGrouping(ast)):
-    #    pass
+    # flatten all repetition that's represented as recursion
+    flattenRepetition(ast)
 
     # remove all single-sucessor nodes
-    while(removeSingleSuccessors(ast)):
-        pass
+    removeSingleSuccessors(ast)
 
+    # update depth property of all nodes in tree (used for calculating scope during symbol and type checking)
     cst.updateDepth(0)
 
     return ast

@@ -67,15 +67,24 @@ class tree:
             print("Child not found")
 
     def toString(self):
-        return self.rule + " | " + self.subRule + " | " + str(self.value[0])
+        return str(self.rule) + " | " + str(self.subRule) + " | " + str(self.value[0])
 
-    def pprint(self, _prefix="", _last=True):
-        if(self.value[0] != None):
-            print(_prefix, "`- " if _last else "|- ", self.toString(), sep="")
+    def pprint(self, drawSpacers=True, _prefix="", _last=True):
+        
+        if drawSpacers:
+            if(self.value[0] != None):
+                print(_prefix, "`- " if _last else "|- ", self.toString(), sep="")
+            else:
+                print(_prefix, "`- " if _last else "|- ", str(self.rule), sep="")
+            _prefix += "   " if _last else "|  "
         else:
-            print(_prefix, "`- " if _last else "|- ", str(self.rule), sep="")
-        _prefix += "   " if _last else "|  "
+            if(self.value[0] != None):
+                print(_prefix, "   ", self.toString(), sep="")
+            else:
+                print(_prefix, "   ", str(self.rule), sep="")
+            _prefix += "   "
+
         child_count = len(self.getChildren())
         for i, child in enumerate(self.getChildren()):
             _last = i == (child_count - 1)
-            child.pprint(_prefix, _last)
+            child.pprint(drawSpacers, _prefix, _last)
