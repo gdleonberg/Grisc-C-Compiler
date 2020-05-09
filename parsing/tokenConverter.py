@@ -59,6 +59,7 @@ class tokenConverter:
         ]
         
         self.escapeSequences = {
+            "'\\0'":	str(int("00", 16)),
             "'\\a'":	str(int("07", 16)),
             "'\\b'":	str(int("08", 16)),
             "'\\e'":	str(int("1B", 16)),

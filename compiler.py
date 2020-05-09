@@ -6,6 +6,7 @@ import parsing.tokenConverter as tokenConverter
 import parsing.genParser as genParser
 import parsing.tree as tree
 import parsing.cstToAst as cstToAst
+import parsing.graphVisualizer as graphVisualizer
 
 # store old stdout for print redirection
 old_stdout = sys.stdout
@@ -85,9 +86,17 @@ ast.pprint(False)
 astText = new_stdout.getvalue()
 with open("logs/AST.log", "w") as log:
     log.write(astText)
+
+new_stdout = io.StringIO()
+sys.stdout = new_stdout
+ast.postorderPprint(False)
+astText = new_stdout.getvalue()
+with open("logs/AST_postorder.log", "w") as log:
+    log.write(astText)
+
 sys.stdout = old_stdout
 
-
+graphVisualizer.visualize(ast, "logs/AST.png")
 
 # print final generated code
 #with open(outFilename, "w") as outFile:

@@ -11,6 +11,10 @@ int main(int a, int c)
 
     char b = '5', *c;
     int d = 32, *f = 12;
+    int e[5];
+    char g[6] = {'1', '2', '3', '4', '5', '\0'};
+    int h[sizeof(g)];
+    //g[3] = 313;
     struct myStruct c = 12;
     b = (c*(2+3));
     //char a = 42;

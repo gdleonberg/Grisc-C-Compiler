@@ -55,19 +55,28 @@ class tree:
         return childIndex
 
     def removeChild(self, childRef):
-        print("Node: " + self.toString() + " Removing child: " + childRef.toString())
+        #print("Node: " + self.toString() + " Removing child: " + childRef.toString())
         childIndex = self.findChild(childRef) 
         if childIndex != -1:
-            print("Child found at index " + str(childIndex))
-            print(self.children)
+            #print("Child found at index " + str(childIndex))
+            #print(self.children)
             self.children.pop(childIndex)
-            print("Child removed")
-            print(self.children)
+            #print("Child removed")
+            #print(self.children)
         else:
-            print("Child not found")
+            #print("Child not found")
+            pass
 
     def toString(self):
         return str(self.rule) + " | " + str(self.subRule) + " | " + str(self.value[0])
+
+    def toStringCleaned(self):
+        retStr = str(self.rule)
+        if not (self.subRule is None):
+            retStr += " | " + str(self.subRule)
+        if not (self.value[0] is None):
+            retStr += " | " + str(self.value[0])
+        return retStr
 
     def pprint(self, drawSpacers=True, _prefix="", _last=True):
         
@@ -88,3 +97,28 @@ class tree:
         for i, child in enumerate(self.getChildren()):
             _last = i == (child_count - 1)
             child.pprint(drawSpacers, _prefix, _last)
+
+    def postorderPprint(self, drawSpacers=True, _prefix="", _last=True):
+        
+        child_count = len(self.getChildren())
+        oldPrefix = _prefix
+        _prefix += "   "
+        for i, child in enumerate(self.getChildren()):
+            _last = i == (child_count - 1)
+            child.postorderPprint(drawSpacers, _prefix, _last)
+        _prefix = oldPrefix
+
+        if drawSpacers:
+            if(self.value[0] != None):
+                print(_prefix, "`- " if _last else "|- ", self.toString(), sep="")
+            else:
+                print(_prefix, "`- " if _last else "|- ", str(self.rule), sep="")
+            _prefix += "   " if _last else "|  "
+        else:
+            if(self.value[0] != None):
+                print(_prefix, "   ", self.toString(), sep="")
+            else:
+                print(_prefix, "   ", str(self.rule), sep="")
+            _prefix += "   "
+
+        

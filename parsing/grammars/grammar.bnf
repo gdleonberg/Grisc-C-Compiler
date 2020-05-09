@@ -4,7 +4,7 @@
 %token EOF
 %token STRUCT
 %token SHORT LONG SIGNED UNSIGNED
-%token FLOAT DOUBLE VOID BOOL STATIC
+%token FLOAT DOUBLE VOID BOOL STATIC SIZEOF
 
 """
 need to add ternary, typedef, enum, do while, const union, multiple declaration by comma,
@@ -93,15 +93,25 @@ pointer_optional_prime
     ;
 
 array_optional
-    : '[' CONSTANT ']' array_optional_prime
+    : '[' constant_expr ']' array_optional_prime
     | '[' ']' array_optional_prime
     | epsilon
     ;
 
 array_optional_prime
-    : '[' CONSTANT ']' array_optional_prime
+    : '[' constant_expr ']' array_optional_prime
     | '[' ']' array_optional_prime
     | epsilon
+    ;
+
+constant_expr
+    : sizeof_expr
+    | CONSTANT
+    ;
+
+sizeof_expr
+    : SIZEOF '(' total_type ')'
+    | SIZEOF '(' IDENTIFIER ')'
     ;
 
 statement_prime
@@ -156,6 +166,20 @@ type
 
 assignment
     : assignment_operator expression
+    | assignment_operator initializer
+    ;
+
+initializer
+    : '{' initializer_list '}'
+    ;
+
+initializer_list
+    : CONSTANT initializer_list_prime
+    ;
+
+initializer_list_prime
+    : ',' CONSTANT initializer_list_prime
+    | epsilon
     ;
 
 optional_assignment
