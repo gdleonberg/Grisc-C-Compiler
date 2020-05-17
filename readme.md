@@ -15,3 +15,4 @@
     * varargs using ...
 
   * Adds C99-style single line comments using '//'
+  * Adds ability to declare variables anywhere, not just top of scope block
