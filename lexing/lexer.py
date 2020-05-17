@@ -104,7 +104,7 @@ class lexer:
         for i in range(0, len(localSource)):
             line = localSource[i][0].rstrip()
             origLine = line
-            
+            currLinePos = 0
             tokens = []
             while line != "":
                 if line.strip() == "":
@@ -112,20 +112,24 @@ class lexer:
                 else:
                     if line[0] != " ":
                         val = line.split(" ", 1)[0]
-                        tokens.append(val)
+                        tokens.append((val, currLinePos))
+                        currLinePos += len(val)
                         line = line.split(val, 1)[1]
                     else:
                         val = line[self.regexes["whitespace"].match(line).span()[0]: self.regexes["whitespace"].match(line).span()[1]]
-                        tokens.append(val)
+                        tokens.append((val, currLinePos))
+                        currLinePos += len(val)
                         line = line.split(val, 1)[1]
                 
             while tokens != []:
                 if(len(tokens) >= 2):
-                    retTokens.append([tokens[0] + tokens[1], localSource[i][1], localSource[i][2], origLine, i])
+                    linePos = tokens[0][1]
+                    retTokens.append([tokens[0][0] + tokens[1][0], localSource[i][1], localSource[i][2], origLine, i, linePos])
                     tokens.pop(0)
                     tokens.pop(0)
                 else:
-                    retTokens.append([tokens[0], localSource[i][1], localSource[i][2], origLine, i])
+                    linePos = tokens[0][1]
+                    retTokens.append([tokens[0][0], localSource[i][1], localSource[i][2], origLine, i, linePos])
                     tokens.pop(0)
             
         return retTokens
@@ -139,9 +143,12 @@ class lexer:
         for i in range(0, len(startTokens)):
             self.tokenTup = startTokens[i]
             self.token = self.tokenTup[0]
-            #print("Token to start is: '" + token + "'")
+            linePos = self.tokenTup[5]
+            #print("Token to start is: '" + str(self.tokenTup) + "'")
             while self.token.strip() != "":
                 retToken = self.getToken()
+                retToken.append(linePos)
+                linePos += len(retToken[0])
                 if (retToken[1] != "whitespace") and (retToken[1] != "end_of_file") and (retToken[1] != ""):
                     #print(retToken[0] + " : " + retToken[1])
                     retTokens.append(retToken)

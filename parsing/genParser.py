@@ -20,6 +20,7 @@ class parser:
         
         self.tokens = tokens
         self.currTokenNum = 0
+        self.failures = []
         
     def empty(self):
         return (self.currTokenNum == len(self.tokens))
@@ -53,8 +54,7 @@ class parser:
     def putToken(self, token):
         self.currTokenNum -= 1
         
-    def parse(self):
-         """)
+    def parse(self):\n""")
             
             # collect all production rules from grammar file
             prod_rules = []
@@ -100,7 +100,20 @@ class parser:
             if firstParse == "":
                 print("Unspecified first production rule!")
                 quit()
-            rulesFile.write("return self." + firstParse + "(0)\n\n")
+            rulesFile.write("""
+        retMessage = "Parsed Successfully"
+        retFlag, retTree = self.""" + firstParse + """(0)
+        if not retFlag:
+            failures = self.failures
+            self.failures = sorted(failures, key=lambda failures:failures[1], reverse=True)
+            for failure in self.failures:
+                print(str(failure[1]) + ": " + ", ".join(failure[0]))
+            failAtToken = [str(part) for part in self.tokens[self.failures[0][1]-2]]
+            print("\\"" + "\\", \\"".join(failAtToken) + "\\"")
+            failMsgParts = self.failures[0][0]
+            retMessage = "Parse failure at file \\"" + failAtToken[2] + "\\", line " + failAtToken[3] + "\\n" + \\
+                         failAtToken[4] + "\\n" + ('~' * int(failAtToken[-1])) + "^"
+        return retMessage, retTree\n\n""")
             
             # use production rules to write recursive-descent functions in rules file
             for prod_rule in prod_rules: 
@@ -131,6 +144,7 @@ class parser:
                             if expectedToken in token_rules:
                                 rulesFile.write("            token = self.getToken()\n")
                                 rulesFile.write("            if token[1] != \"" + expectedToken + "\":\n")
+                                rulesFile.write("                self.failures.append(((\"" + prod_rule[0] + "\", \"" + " ".join(rule) + "\", \"" + expectedToken + "\"), self.getCurrTokenNum()))\n")
                                 rulesFile.write("                self.putToken(token)\n")
                                 rulesFile.write("                retFlag = False\n")
                                 rulesFile.write("                retTree.reset()\n")
@@ -140,7 +154,7 @@ class parser:
                                 rulesFile.write("                retFlag = True\n")
                                 rulesFile.write("                retTree.addChildNode(\"" + prod_rule[0] + "\", \"" + expectedToken + "\", self.prevToken())\n\n")
                             else:
-                                print("Undefined token type " + expectedToken + " used in production rule " + str(prod_rule))
+                                print("Undefined token type " + expectedToken + " used in production rule " + prod_rule[0])
                                 quit()
                         elif "'" not in expectedToken:
                             rulesFile.write("            backupTokenNum = self.getCurrTokenNum()\n")
@@ -148,6 +162,7 @@ class parser:
                                 rulesFile.write("            print(((nestLevel + 2) * \"  \") + \"Calling parse_" + expectedToken + "\")\n")
                             rulesFile.write("            ruleResult, ruleTree = self.parse_" + expectedToken + "(nestLevel + 3)\n")
                             rulesFile.write("            if not ruleResult:\n")
+                            rulesFile.write("                self.failures.append(((\"" + prod_rule[0] + "\", \"" + " ".join(rule) + "\", \"" + expectedToken + "\"), self.getCurrTokenNum()))\n")
                             rulesFile.write("                self.setCurrTokenNum(backupTokenNum)\n")
                             #if debugPrintsInParser:
                             #    rulesFile.write("                print(((nestLevel + 2) * \"  \") + \"Failed. Re-winding and trying next production rule\")\n")
@@ -161,6 +176,7 @@ class parser:
                         else:
                             rulesFile.write("            token = self.getToken()\n")
                             rulesFile.write("            if token[0] != " + expectedToken + ":\n")
+                            rulesFile.write("                self.failures.append(((\"" + prod_rule[0] + "\", \"" + " ".join(rule) + "\", \"" + expectedToken + "\"), self.getCurrTokenNum()))\n")
                             rulesFile.write("                self.putToken(token)\n")
                             rulesFile.write("                retFlag = False\n")
                             rulesFile.write("                retTree.reset()\n")

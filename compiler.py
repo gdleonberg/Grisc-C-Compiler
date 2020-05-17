@@ -7,6 +7,7 @@ import parsing.genParser as genParser
 import parsing.tree as tree
 import parsing.cstToAst as cstToAst
 import parsing.graphVisualizer as graphVisualizer
+import parsing.symbolTable as symbolTable
 
 # store old stdout for print redirection
 old_stdout = sys.stdout
@@ -67,12 +68,12 @@ parseTree.pprint()
 pprintedParseTreePruned = new_stdout.getvalue()
 
 sys.stdout = old_stdout
-print("Parse: " + str(parseStatus))
+print(parseStatus)
 
 with open("logs/parse.log", "w") as log:
     log.write(parseDebugLog)
     log.write("\n\n\n")
-    log.write("Parse: " + str(parseStatus))
+    log.write(parseStatus)
 with open("logs/CST.log", "w") as log:
     log.write(pprintedParseTreePruned)
 
@@ -97,6 +98,10 @@ with open("logs/AST_postorder.log", "w") as log:
 sys.stdout = old_stdout
 
 graphVisualizer.visualize(ast, "logs/AST.png")
+
+# apply symbol table checking
+#mySymbolTable = symbolTable.symbolTable(ast)
+#mySymbolTable.traverse()
 
 # print final generated code
 #with open(outFilename, "w") as outFile:

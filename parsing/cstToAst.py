@@ -6,11 +6,19 @@ def prune(node, depth):
     for child in node.getChildren():
         retVal += prune(child, depth + 1)
     if node.getChildren() == []:
-        if node.value == [None, None, None, None, None]:
+        if (node.value == [None, None, None, None, None]) and not((node.rule == "scope_rise") or (node.rule == "scope_drop")):
             if node.getParent() != None:
                 node.parent.removeChild(node)
                 retVal += 1
     return retVal
+
+def renamePrimes(node):
+    if not(node.rule is None):
+        node.rule = node.rule.replace("_prime", "")
+    if not(node.subRule is None):
+        node.subRule = node.subRule.replace("_prime", "")
+    for child in node.children:
+        renamePrimes(child)
 
 def flattenRepetition(node):
 
@@ -69,7 +77,10 @@ def toAst(cst):
     # remove all single-sucessor nodes
     removeSingleSuccessors(ast)
 
+    # rename _prime nodes
+    renamePrimes(ast)
+
     # update depth property of all nodes in tree (used for calculating scope during symbol and type checking)
-    cst.updateDepth(0)
+    ast.updateDepth(0)
 
     return ast

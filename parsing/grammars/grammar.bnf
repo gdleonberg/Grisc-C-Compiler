@@ -2,15 +2,14 @@
 %token RETURN IDENTIFIER CONSTANT INT CHAR STRING_LITERAL
 %token MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN ADD_ASSIGN SUB_ASSIGN LEFT_ASSIGN RIGHT_ASSIGN AND_ASSIGN XOR_ASSIGN OR_ASSIGN
 %token EOF
-%token STRUCT
+%token STRUCT ENUM UNION
 %token SHORT LONG SIGNED UNSIGNED
 %token FLOAT DOUBLE VOID BOOL STATIC SIZEOF
 
 """
-need to add ternary, typedef, enum, do while, const union, multiple declaration by comma,
-multiple declaration with optional assins by comma, typedef an anonymous struct
+need to add ternary, typedef, enum, do while, const
 """
-%token TYPEDEF ENUM DO CONST UNION
+%token TYPEDEF DO CONST
 %start program
 
 program
@@ -20,7 +19,8 @@ program
 external_statement
     : function_declaration
     | variable_declarations_and_optional_assignments ';'
-    | struct_declaration ';'
+    | struct_or_union_declaration ';'
+    | enum_declaration ';'
     ;
 
 external_statement_prime
@@ -28,16 +28,36 @@ external_statement_prime
     | EOF
     ;
 
-struct_declaration
-    : STRUCT IDENTIFIER '{' struct_member_list '}'
+enum_declaration
+    : ENUM identifier_optional '{' enum_member_list '}'
     ;
 
-struct_member_list
-    : variable_declarations_and_no_assignments ';' struct_member_list_prime
+enum_member_list
+    : IDENTIFIER '=' CONSTANT enum_member_list_prime
+    | IDENTIFIER enum_member_list_prime
     ;
 
-struct_member_list_prime
-    : variable_declarations_and_no_assignments ';' struct_member_list_prime
+enum_member_list_prime
+    : ',' IDENTIFIER '=' CONSTANT enum_member_list_prime
+    | ',' IDENTIFIER enum_member_list_prime
+    | epsilon
+    ;
+
+struct_or_union
+    : STRUCT
+    | UNION
+    ;
+
+struct_or_union_declaration
+    : struct_or_union identifier_optional '{' struct_or_union_member_list '}'
+    ;
+
+struct_or_union_member_list
+    : variable_declarations_and_no_assignments ';' struct_or_union_member_list_prime
+    ;
+
+struct_or_union_member_list_prime
+    : variable_declarations_and_no_assignments ';' struct_or_union_member_list_prime
     | epsilon
     ;
 
@@ -60,7 +80,7 @@ variable_declarations_and_optional_assignments_prime
     ;
 
 function_declaration
-    : total_type IDENTIFIER '(' argument_list ')' '{' statement_prime return_statement '}'
+    : total_type IDENTIFIER scope_drop '(' argument_list ')' '{' statement_prime return_statement scope_rise '}'
     ;
 
 argument_list
@@ -74,7 +94,7 @@ argument_list_prime
     ;
 
 argument
-    : total_type pointer_optional identifier_optional array_optional
+    : total_type pointer_optional IDENTIFIER array_optional
     ;
 
 identifier_optional
@@ -120,9 +140,23 @@ statement_prime
     ;
 
 statement
-    : IDENTIFIER assignment ';'
+    : compound_statement
+    | IDENTIFIER array_optional assignment ';'
     | variable_declarations_and_optional_assignments ';'
-    | struct_declaration ';'
+    | struct_or_union_declaration ';'
+    | enum_declaration ';'
+    ;
+
+compound_statement
+    : '{' scope_drop statement statement_prime scope_rise '}'
+    ;
+
+scope_rise
+    : epsilon
+    ;
+
+scope_drop
+    : epsilon
     ;
 
 return_statement
@@ -131,7 +165,8 @@ return_statement
 
 total_type
     : type_qualifier_list type
-    | STRUCT IDENTIFIER
+    | struct_or_union IDENTIFIER
+    | ENUM IDENTIFIER
     ;
 
 type_qualifier_list
@@ -150,6 +185,7 @@ type_qualifier
     | SIGNED
     | UNSIGNED
     | STATIC
+    | CONST
     ;
 
 type
