@@ -77,7 +77,8 @@ with open("logs/parse.log", "w") as log:
 with open("logs/CST.log", "w") as log:
     log.write(pprintedParseTreePruned)
 
-
+if("failure" in parseStatus):
+    exit(0)
 
 # make AST from CST
 ast = cstToAst.toAst(parseTree)
@@ -95,13 +96,22 @@ astText = new_stdout.getvalue()
 with open("logs/AST_postorder.log", "w") as log:
     log.write(astText)
 
-sys.stdout = old_stdout
+
 
 graphVisualizer.visualize(ast, "logs/AST.png")
 
 # apply symbol table checking
-#mySymbolTable = symbolTable.symbolTable(ast)
-#mySymbolTable.traverse()
+new_stdout = io.StringIO()
+sys.stdout = new_stdout
+mySymbolTable = symbolTable.symbolTable(ast)
+mySymbolTable.addSymbols()
+symbolTableText = new_stdout.getvalue()
+with open("logs/symbolTable.log", "w") as log:
+    log.write(symbolTableText)
+
+
+
+sys.stdout = old_stdout
 
 # print final generated code
 #with open(outFilename, "w") as outFile:

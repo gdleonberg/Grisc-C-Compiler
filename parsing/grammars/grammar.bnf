@@ -5,10 +5,6 @@
 %token STRUCT ENUM UNION
 %token SHORT LONG SIGNED UNSIGNED
 %token FLOAT DOUBLE VOID BOOL STATIC SIZEOF
-
-"""
-need to add ternary, typedef, enum, do while, const
-"""
 %token TYPEDEF DO CONST
 %start program
 
@@ -19,13 +15,21 @@ program
 external_statement
     : function_declaration
     | variable_declarations_and_optional_assignments ';'
+    | variable_assignment ';'
     | struct_or_union_declaration ';'
+    | typedef_declaration ';'
     | enum_declaration ';'
     ;
 
 external_statement_prime
     : external_statement external_statement_prime
     | EOF
+    ;
+
+typedef_declaration
+    : TYPEDEF total_type pointer_optional IDENTIFIER
+    | TYPEDEF enum_declaration IDENTIFIER
+    | TYPEDEF struct_or_union_declaration IDENTIFIER
     ;
 
 enum_declaration
@@ -74,13 +78,17 @@ variable_declarations_and_optional_assignments
     : total_type pointer_optional IDENTIFIER array_optional optional_assignment variable_declarations_and_optional_assignments_prime
     ;
 
+variable_assignment
+    : IDENTIFIER array_optional assignment
+    ;
+
 variable_declarations_and_optional_assignments_prime
     : ',' pointer_optional IDENTIFIER array_optional optional_assignment variable_declarations_and_optional_assignments_prime
     | epsilon
     ;
 
 function_declaration
-    : total_type IDENTIFIER scope_drop '(' argument_list ')' '{' statement_prime return_statement scope_rise '}'
+    : total_type IDENTIFIER '(' argument_list ')' '{' scope_drop statement_prime return_statement scope_rise '}'
     ;
 
 argument_list
@@ -122,11 +130,6 @@ array_optional_prime
     : '[' constant_expr ']' array_optional_prime
     | '[' ']' array_optional_prime
     | epsilon
-    ;
-
-constant_expr
-    : sizeof_expr
-    | CONSTANT
     ;
 
 sizeof_expr
@@ -237,6 +240,31 @@ assignment_operator
 	| OR_ASSIGN
 	;
 
+cast_expression
+    : '(' total_type pointer_optional ')' expression
+    ;
+
+value
+    : plus_or_minus CONSTANT
+    | IDENTIFIER array_optional
+    | STRING_LITERAL
+    ;
+
+plus_or_minus
+    : '+'
+    | '-'
+    | epsilon
+    ;
+
+pointer
+	: '*' pointer_prime
+	;
+
+pointer_prime
+    : '*' pointer_prime
+    | epsilon
+    ;
+
 expression
    : term expression_prime
    ;
@@ -259,27 +287,40 @@ term_prime
     ;
 
 factor
-    : '(' expression ')'
+    : cast_expression
+    | '(' expression ')'
+    | sizeof_expr
     | value
     ;
 
-value
-    : plus_or_minus CONSTANT
-    | IDENTIFIER
-    | STRING_LITERAL
-    ;
+constant_expr
+   : constant_term constant_expr_prime
+   ;
 
-plus_or_minus
-    : '+'
-    | '-'
+constant_expr_prime
+    : '+' constant_term constant_expr_prime
+    | '-' constant_term constant_expr_prime
     | epsilon
     ;
 
-pointer
-	: '*' pointer_prime
-	;
+constant_term
+    : constant_factor constant_term_prime
+    ;
 
-pointer_prime
-    : '*' pointer_prime
+constant_term_prime
+    : '*' constant_factor constant_term_prime
+    | '/' constant_factor constant_term_prime
+    | '%' constant_factor constant_term_prime
     | epsilon
+    ;
+
+constant_factor
+    : cast_expression
+    | '(' constant_expr ')'
+    | constant_value
+    ;
+
+constant_value
+    : CONSTANT
+    | sizeof_expr
     ;

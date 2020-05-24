@@ -6,7 +6,7 @@ def prune(node, depth):
     for child in node.getChildren():
         retVal += prune(child, depth + 1)
     if node.getChildren() == []:
-        if (node.value == [None, None, None, None, None]) and not((node.rule == "scope_rise") or (node.rule == "scope_drop")):
+        if (node.value == [None, None, None, None, None]) and (node.rule not in ["scope_rise", "scope_drop"]):
             if node.getParent() != None:
                 node.parent.removeChild(node)
                 retVal += 1
@@ -42,7 +42,7 @@ def removeSuperfluousGroupingAndSeperators(node):
     while flag:
         flag = False 
         for i in range(0, len(node.children)):
-            if (node.children[i].value[0] in ['{', '}', '(', ')', ';', ',']) or (node.children[i].subRule == "EOF"):
+            if (node.children[i].value[0] in ['{', '}', '(', ')', ';', ',', '[', ']']) or (node.children[i].subRule == "EOF"):
                 del node.children[i]
                 flag = True
                 break
@@ -55,7 +55,7 @@ def removeSingleSuccessors(node):
     flag = True
     while flag:
         flag = False
-        if len(node.children) == 1:
+        if (len(node.children) == 1) and (node.rule not in ["array_optional", "array_optional_prime"]):
             node.become(node.children[0])
             flag = True
 

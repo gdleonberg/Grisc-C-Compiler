@@ -7,12 +7,14 @@ class tree:
         self.parent = None
         self.children = []
         self.depth = 0
+        self.symbolTable = None
 
     def become(self, node):
         self.rule = node.rule
         self.subRule = node.subRule
         self.value = node.value
         self.children = node.children
+        self.symbolTable = node.symbolTable
         
     def reset(self):
         self.children = []

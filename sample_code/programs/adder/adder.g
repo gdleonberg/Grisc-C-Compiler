@@ -1,4 +1,14 @@
-void *temp = 0;
+int ***b;
+foo g[6];
+
+double a = 2;
+foo t[2*(12-3*3)*(12 + sizeof(a))];
+
+g[3 - 1] = 12;
+struct foobar h;
+void *v;
+int *b = NULL;
+long int **temp = 0 + b + (void *)g*(struct foobar *)5;
 
 enum COLORS
 {
@@ -6,6 +16,14 @@ enum COLORS
     BLUE,
     YELLOW
 };
+
+typedef struct
+{
+    int A;
+    COLORS B;
+} abEnum;
+
+typedef long int * long_int_ptr;
 
 /*
 enum NAMES
@@ -45,7 +63,7 @@ int main(int a, int c)
         int a = 5;
     }
     
-    char b = '5', *b;
+    char b = '5', *c;
     /*
     int d = 32, *f = 12;
     int e[5];

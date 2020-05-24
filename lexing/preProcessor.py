@@ -16,7 +16,7 @@ class preProcessor:
     
     def __init__(self, filename):
         
-        self.protected = ["__FILE__", "__LINE__", "__BASE_FILE__", "__DATE__", "__TIME__"]
+        self.protected = ["__FILE__", "__LINE__", "__BASE_FILE__", "__DATE__", "__TIME__", "NULL"]
         self.filename = filename
 
     def preProcess(self):
@@ -26,6 +26,7 @@ class preProcessor:
         filepath = filepath.rsplit("/", 1)[0]
         
         defines = {"__FILE__" : '"' + filename + '"', "__LINE__" : 1}
+        defines["NULL"] = '(void *)0'
         defines["__DATE__"] = '"' + datetime.date.today().strftime("%b %d %Y") + '"'
         defines["__TIME__"] = '"' + datetime.datetime.now().strftime("%H:%M:%S") + '"'
         defines["__BASE_FILE__"] = '"' + filename + '"'
@@ -144,7 +145,7 @@ class preProcessor:
                         currLocalToken = 0
                         while currLocalToken != len(localTokens):
                             if (localTokens[currLocalToken][1] != "identifier") or (localTokens[currLocalToken][0] not in defines):
-                                retTokens.append([localTokens[currLocalToken][0], localTokens[currLocalToken][1], localTokens[currLocalToken][2], localTokens[currLocalToken][3], tokens[tokenNum][4]])
+                                retTokens.append([localTokens[currLocalToken][0], localTokens[currLocalToken][1], localTokens[currLocalToken][2], localTokens[currLocalToken][3], tokens[tokenNum][4], localTokens[currLocalToken][5]])
                                 currLocalToken += 1
                             else:
                                 
