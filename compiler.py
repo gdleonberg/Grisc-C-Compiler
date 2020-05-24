@@ -6,8 +6,8 @@ import parsing.tokenConverter as tokenConverter
 import parsing.genParser as genParser
 import parsing.tree as tree
 import parsing.cstToAst as cstToAst
-import parsing.graphVisualizer as graphVisualizer
-import parsing.symbolTable as symbolTable
+import analysis.graphVisualizer as graphVisualizer
+import analysis.symbolTable as symbolTable
 
 # store old stdout for print redirection
 old_stdout = sys.stdout
@@ -104,10 +104,18 @@ graphVisualizer.visualize(ast, "logs/AST.png")
 new_stdout = io.StringIO()
 sys.stdout = new_stdout
 mySymbolTable = symbolTable.symbolTable(ast)
-mySymbolTable.addSymbols()
-symbolTableText = new_stdout.getvalue()
-with open("logs/symbolTable.log", "w") as log:
-    log.write(symbolTableText)
+try:
+    mySymbolTable.addSymbols()
+    symbolTableText = new_stdout.getvalue()
+    with open("logs/symbolTable.log", "w") as log:
+        log.write(symbolTableText)
+except Exception as e:
+    sys.stdout = old_stdout
+    print(e)
+    symbolTableText = new_stdout.getvalue()
+    with open("logs/symbolTable.log", "w") as log:
+        log.write(symbolTableText)
+    quit()
 
 
 

@@ -3,6 +3,9 @@ import inspect
 
 integrals = {"char" : 1, "int" : 4, "short" : 2, "long" : 4, "float" : 4, "double" : 8, "bool" : 1}
 
+class symbolTableError(Exception):
+    pass
+
 class Variable:
     def __init__(self, name, m_type, pointerDepth, arrayLen):
         self.name = name
@@ -300,13 +303,11 @@ class symbolTable:
                     else:
                         retVal = self.definitions[self.variables[flatList[1]].type].size
                 else:
-                    print("Undefined type '" + self.variables[flatList[1]].type + "' for variable '" + flatList[1] + "'")
-                    retVal = -1
+                    raise symbolTableError("symbolTable.py line " + str(inspect.currentframe().f_lineno) + ": Undefined type '" + self.variables[flatList[1]].type + "' for variable '" + flatList[1] + "'")
             elif flatList[1] in self.definitions:
                 retVal = self.definitions[flatList[1]].size
             else:
-                print("Unable to evaluate sizeof for: " + str(flatList))
-                return -1
+                raise symbolTableError("symbolTable.py line " + str(inspect.currentframe().f_lineno) + ": Unable to evaluate sizeof for: " + str(flatList))
 
             #print(str(flatList) + " = " + str(retVal))
 
