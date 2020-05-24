@@ -1,6 +1,9 @@
 import re
 import inspect
 
+class lexerError(Exception):
+    pass
+
 class lexer:
 
     def __init__(self, source, origsource):
@@ -174,9 +177,8 @@ class lexer:
                 #print(retToken)
                 self.curString = ""
             elif self.token == self.eof:
-                print("Syntax error " + str(inspect.currentframe().f_lineno) + " in file " + self.tokenTup[1] + " at " + str(self.tokenTup[2] - 1))
-                print("Failed to close multi-line comment!")
-                quit()
+                raise lexerError("Syntax error " + str(inspect.currentframe().f_lineno) + " in file " + self.tokenTup[1] + " at " + str(self.tokenTup[2] - 1)
+                + "\nFailed to close multi-line comment!")
             else:
                 self.curString += self.token
                 self.token = ""
@@ -236,10 +238,9 @@ class lexer:
                 
                 self.inPreprocessorCommand = [False, "", self.tokenTup[2] + 1]
                 if not regexes_passed:
-                    print("Syntax error " + str(inspect.currentframe().f_lineno) + " in file " + self.tokenTup[1] + " at line " + str(self.tokenTup[2] + 1) + ": '" + str(self.tokenTup[3]) + "'")
-                    print("Attempted regex against preprocessor command '" + retToken + "'")
-                    print("Current token is '" + self.token + "'")
-                    quit()
+                    raise lexerError("Syntax error " + str(inspect.currentframe().f_lineno) + " in file " + self.tokenTup[1] + " at line " + str(self.tokenTup[2] + 1) + ": '" + str(self.tokenTup[3]) + "'"
+                    + "\nAttempted regex against preprocessor command '" + retToken + "'"
+                    + "\nCurrent token is '" + self.token + "'")
                 
                 #self.tokenTup[2] -= 1
                 #self.tokenTup[3] = self.source[self.tokenTup[2] - 1][0].rstrip()
@@ -284,10 +285,9 @@ class lexer:
                         retToken = self.curString
                         retTokenType = "string_literal"
                     else:
-                        print("Syntax error " + str(inspect.currentframe().f_lineno) + " in file " + self.tokenTup[1] + " at line " + str(self.tokenTup[2] + 1) + ": '" + str(self.tokenTup[3]) + "'")
-                        print("Attempted regex against string '" + self.curString + "'")
-                        print("Current token is '" + self.token + "'")
-                        quit()
+                        raise lexerError("Syntax error " + str(inspect.currentframe().f_lineno) + " in file " + self.tokenTup[1] + " at line " + str(self.tokenTup[2] + 1) + ": '" + str(self.tokenTup[3]) + "'"
+                        + "\nAttempted regex against string '" + self.curString + "'"
+                        + "\nCurrent token is '" + self.token + "'")
                 else:
                     self.curString += self.token
                     self.token = ""
@@ -372,8 +372,7 @@ class lexer:
                     
             if not found:    
                 #if not reserved_word_found:
-                print("Syntax error " + str(inspect.currentframe().f_lineno) + " in file " + self.tokenTup[1] + " at " + str(self.tokenTup[2] + 1) + ": '" + str(self.tokenTup[3]) + "'")
-                print("Current token is '" + self.token + "'")
-                quit()
+                raise lexerError("Syntax error " + str(inspect.currentframe().f_lineno) + " in file " + self.tokenTup[1] + " at " + str(self.tokenTup[2] + 1) + ": '" + str(self.tokenTup[3]) + "'"
+                + "\nCurrent token is '" + self.token + "'")
             
         return [retToken, retTokenType, str(self.tokenTup[1]), str(self.tokenTup[2]), str(self.tokenTup[3])]

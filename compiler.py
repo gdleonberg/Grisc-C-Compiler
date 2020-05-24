@@ -20,11 +20,20 @@ if len(sys.argv) > 3:
     parserDebug = True
 
 # generate parser from bnf
-genParser.generateFromBnf("autoGenParser.py", "grammars/grammar.bnf", parserDebug)
+try:
+    genParser.generateFromBnf("autoGenParser.py", "grammars/grammar.bnf", parserDebug)
+except genParser.genParserError as e:
+    print(e)
+    quit()
 import parsing.autoGenParser as autoGenParser
 
 # resolve all includes and get final lexed program
-tokens = preProcessor.preProcessor(inFilename).preProcess()
+try:
+    tokens = preProcessor.preProcessor(inFilename).preProcess()
+except (preProcessor.preProcessorError, lexer.lexerError) as e:
+    print(e)
+    quit()
+
 """
 with open(outFilename + ".lexed", "w") as outFile:
     for token in tokens:
@@ -109,7 +118,7 @@ try:
     symbolTableText = new_stdout.getvalue()
     with open("logs/symbolTable.log", "w") as log:
         log.write(symbolTableText)
-except Exception as e:
+except symbolTable.symbolTableError as e:
     sys.stdout = old_stdout
     print(e)
     symbolTableText = new_stdout.getvalue()

@@ -2,6 +2,9 @@ import os
 import datetime
 import lexing.lexer as lexer
 
+class preProcessorError(Exception):
+    pass
+
 class preProcessor:
 
     def buildSource(self, openFile):
@@ -81,16 +84,14 @@ class preProcessor:
                     if (definedName not in self.protected) and (definedName not in defines):
                         defines[definedName] = definedVal
                     else:
-                        print("Define error in file " + filename + " at line " + str(defines["__LINE__"]))
-                        quit()
+                        raise preProcessorError("Define error in file " + filename + " at line " + str(defines["__LINE__"]))
                     
                 elif tokens[tokenNum][0].find("#undef") == 0:
                     definedName = tokens[tokenNum][0].split()[1]
                     if (definedName not in self.protected) and (definedName in defines):
                         del defines[definedName]
                     else:
-                        print("Undef error in file " + filename + " at line " + str(defines["__LINE__"]))
-                        quit()
+                        raise preProcessorError("Undef error in file " + filename + " at line " + str(defines["__LINE__"]))
                     
                 elif tokens[tokenNum][0].find("#ifdef") == 0:
                     definedName = tokens[tokenNum][0].split()[1]

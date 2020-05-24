@@ -4,6 +4,9 @@ import os
 https://www.cis.upenn.edu/~matuszek/General/recursive-descent-parsing.html
 """
 
+class genParserError(Exception):
+    pass
+
 def generateFromBnf(outFilename, inFilename, debugPrintsInParser):
     
     path = os.path.abspath(__file__)
@@ -79,8 +82,7 @@ class parser:
                             i += 1
                             break
                         else:
-                            print("Error in generating rules from bnf at line: " + str(i))
-                            quit()
+                            raise genParserError("Error in generating rules from bnf at line: " + str(i))
                         i += 1
                     prod_rule.append(rule_expansions)
                     prod_rules.append(prod_rule)
@@ -98,8 +100,7 @@ class parser:
              
             # write entry point parse
             if firstParse == "":
-                print("Unspecified first production rule!")
-                quit()
+                raise genParserError("Unspecified first production rule for grammar!")
             rulesFile.write("""
         retMessage = "Parsed Successfully"
         retFlag, retTree = self.""" + firstParse + """(0)
@@ -154,8 +155,7 @@ class parser:
                                 rulesFile.write("                retFlag = True\n")
                                 rulesFile.write("                retTree.addChildNode(\"" + prod_rule[0] + "\", \"" + expectedToken + "\", self.prevToken())\n\n")
                             else:
-                                print("Undefined token type " + expectedToken + " used in production rule " + prod_rule[0])
-                                quit()
+                                raise genParserError("Undefined token type " + expectedToken + " used in grammar production rule " + prod_rule[0])
                         elif "'" not in expectedToken:
                             rulesFile.write("            backupTokenNum = self.getCurrTokenNum()\n")
                             if debugPrintsInParser:
