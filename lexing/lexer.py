@@ -14,7 +14,7 @@ class lexer:
         self.eof = "##EOF"
         
         self.reserved_words = [
-            "else",	"switch", "break", "FILE", "double", "long",
+            "else",	"switch", "break", "double", "long",
             "case", "return", "char", "float", 
             "short", "unsigned", "for", "signed", "void",
             "continue",	"goto",	"sizeof", "default", "if",	
@@ -25,7 +25,7 @@ class lexer:
         self.punctuators = [
             ["<<=", ">>="],
             
-            ["->", "++", "--" "<<", ">>", "<=", ">=", "==", "!=", 
+            ["->", "++", "--", "<<", ">>", "<=", ">=", "==", "!=", 
             "&&", "||", "*=", "/=", "%=", "+=", "-=", "&=", "^=", "|="],
             
             ["[", "]", "(", ")", "{", "}", ".", "&", "*", "+", "-",
@@ -147,13 +147,13 @@ class lexer:
             self.tokenTup = startTokens[i]
             self.token = self.tokenTup[0]
             linePos = self.tokenTup[5]
-            #print("Token to start is: '" + str(self.tokenTup) + "'")
+            print("Token to start is: '" + str(self.tokenTup) + "'")
             while self.token.strip() != "":
                 retToken = self.getToken()
                 retToken.append(linePos)
                 linePos += len(retToken[0])
                 if (retToken[1] != "whitespace") and (retToken[1] != "end_of_file") and (retToken[1] != ""):
-                    #print(retToken[0] + " : " + retToken[1])
+                    print(retToken[0] + " : " + retToken[1])
                     retTokens.append(retToken)
 
         # return list of tokens
@@ -165,16 +165,16 @@ class lexer:
         retTokenType = ""
         
         if self.inMultiLineComment:
-            #print("in multiline comment")
+            print("in multiline comment")
             if "*/" in self.token:
-                #print("end multiline comment")
+                print("end multiline comment")
                 self.curString += self.token.split("*/", 1)[0]
                 self.token = self.token.split("*/", 1)[1]
                 self.inMultiLineComment = False
                 retTokenType = "multi_line_comment"
                 retToken = self.curString + "*/"
                 self.tokenTup[3] = retToken
-                #print(retToken)
+                print(retToken)
                 self.curString = ""
             elif self.token == self.eof:
                 raise lexerError("Syntax error " + str(inspect.currentframe().f_lineno) + " in file " + self.tokenTup[1] + " at " + str(self.tokenTup[2] - 1)
@@ -192,7 +192,7 @@ class lexer:
                 #self.tokenTup[2] -= 1
                 #self.tokenTup[3] = self.source[self.tokenTup[2] - 1][0].rstrip()
                 
-                #print("Comment ended at file " + self.tokenTup[1] + " line " + str(self.tokenTup[2]) + ": '" + retToken + "'")
+                print("Comment ended at file " + self.tokenTup[1] + " line " + str(self.tokenTup[2]) + ": '" + retToken + "'")
                 self.curString = ""
                 
                 if (self.tokenTup[2] >= 2) and (len(self.origsource) > 2):
@@ -219,7 +219,7 @@ class lexer:
                 retTokenType = "preprocessor_command"
                 retToken = self.curString.strip()
 
-                #print(curString)
+                print(self.curString)
                 self.curString = ""
                 
                 regexes_passed = True
@@ -257,7 +257,7 @@ class lexer:
                 self.token = ""
                 
         elif self.token[0:2] == "/*":
-            #print("begin multiline comment")
+            print("begin multiline comment")
             self.inMultiLineComment = True;
             self.curString = '/*'
             self.token = self.token.split("/*", 1)[1]
@@ -266,12 +266,12 @@ class lexer:
         elif (not self.inString) and (self.token[0] == '"'):
                 self.inString = True
                 self.curString = '"'
-                #print("Found string start in file " + self.tokenTup[1] + " at line " + str(self.tokenTup[2] + 1))
-                #print("\tLine is '" + self.tokenTup[3] + "'")
+                print("Found string start in file " + self.tokenTup[1] + " at line " + str(self.tokenTup[2] + 1))
+                print("\tLine is '" + self.tokenTup[3] + "'")
                 self.token = self.token[1:]
                 
         elif self.inString:
-            #print("\t\tIn string, current token is '" + token + "'")
+            print("\t\tIn string, current token is '" + self.token + "'")
             if("\\" in self.token):
                 self.curString += self.token.split("\\", 1)[0] + "\\" + self.token.split("\\", 1)[1][0]
                 self.token = self.token.split("\\", 1)[1][1:]
@@ -293,12 +293,12 @@ class lexer:
                     self.token = ""
             
             if self.inString:
-                #print("\t\tCurrent string: '" + self.curString + "'")
-                #print("\t\tRemainder of token: '" + self.token + "'")
+                print("\t\tCurrent string: '" + self.curString + "'")
+                print("\t\tRemainder of token: '" + self.token + "'")
                 pass
             else:
                 pass
-                #print("\tFinal string: '" + self.curString + "'")
+                print("\tFinal string: '" + self.curString + "'")
                 
         elif self.token[0:2] == "//":
             self.inSingleLineComment = [True, self.tokenTup[2]]
@@ -306,24 +306,26 @@ class lexer:
             if len(self.token) > len("//"):
                 self.curString += self.token.split("//", 1)[1]
             self.token = ""
-            #print("Comment found at file " + self.tokenTup[1] + " line " + str(self.tokenTup[2]) + ": '" + self.tokenTup[0] + "'")
+            print("Comment found at file " + self.tokenTup[1] + " line " + str(self.tokenTup[2]) + ": '" + self.tokenTup[0] + "'")
             
         else:
             
             found = False
             
             if not found:
+                print("Checking for punctuator against token: '" + self.token + "'")
                 for punctuatorSubList in self.punctuators:
                     punctuatorLen = len(punctuatorSubList[0])
                     if self.token[0:punctuatorLen] in punctuatorSubList:
-                        #print("%d char punctuator", punctuatorLen)
                         found = True
                         retToken = self.token[0:punctuatorLen]
                         retTokenType = "punctuator"
+                        print(str(punctuatorLen) + " char punctuator: '" + retToken + "'")
                         if len(self.token) > punctuatorLen:
                             self.token = self.token[punctuatorLen:]
                         else:
                             self.token = ""
+                        break
                 
             if not found:
                 for regex in self.regexes:
@@ -342,7 +344,7 @@ class lexer:
             if not found:
                 for word in self.reserved_words:
                     if self.token.find(word) == 0:
-                        #print("reserved word")
+                        print("reserved word")
                         #reserved_word_found = True
                         retToken = word
                         retTokenType = "reserved_word"
@@ -353,7 +355,7 @@ class lexer:
             if not found:
                 for command in self.preprocessor_commands:
                     if self.token.strip() == command:
-                        #print("preprocessor_command_start")
+                        print("preprocessor_command_start")
                         found = True
                         self.inPreprocessorCommand = [True, command, self.tokenTup[2]]
                         self.curString = self.token

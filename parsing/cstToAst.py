@@ -42,7 +42,7 @@ def removeSuperfluousGroupingAndSeperators(node):
     while flag:
         flag = False 
         for i in range(0, len(node.children)):
-            if (node.children[i].value[0] in ['{', '}', '(', ')', ';', ',', '[', ']']) or (node.children[i].subRule == "EOF"):
+            if (node.children[i].value[0] in ['{', '}', '(', ')', ';', ',']) or (node.children[i].subRule == "EOF"):
                 del node.children[i]
                 flag = True
                 break

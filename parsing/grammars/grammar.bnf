@@ -1,11 +1,18 @@
 
-%token RETURN IDENTIFIER CONSTANT INT CHAR STRING_LITERAL
+%token IDENTIFIER CONSTANT INT CHAR STRING_LITERAL
 %token MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN ADD_ASSIGN SUB_ASSIGN LEFT_ASSIGN RIGHT_ASSIGN AND_ASSIGN XOR_ASSIGN OR_ASSIGN
 %token EOF
 %token STRUCT ENUM UNION
 %token SHORT LONG SIGNED UNSIGNED
 %token FLOAT DOUBLE VOID BOOL STATIC SIZEOF
-%token TYPEDEF DO CONST
+%token TYPEDEF CONST
+%token PTR_OP DOT_OP 
+%token IF ELSE DO WHILE FOR SWITCH CASE DEFAULT BREAK GOTO CONTINUE RETURN
+%token INC_OP DEC_OP 
+
+%token LEFT_OP RIGHT_OP 
+%token LOGICAL_AND_OP LOGICAL_OR_OP LOGICAL_NOT_OP BITWISE_AND_OP BITWISE_OR_OP BITWISE_XOR_OP BITWISE_NOT_OP
+%token LT_OP GT_OP LE_OP GE_OP EQ_OP NE_OP
 %start program
 
 program
@@ -14,11 +21,12 @@ program
 
 external_statement
     : function_declaration
+    | forward_declaration ';'
     | variable_declarations_and_optional_assignments ';'
-    | variable_assignment ';'
     | struct_or_union_declaration ';'
     | typedef_declaration ';'
     | enum_declaration ';'
+    | ';'
     ;
 
 external_statement_prime
@@ -27,9 +35,14 @@ external_statement_prime
     ;
 
 typedef_declaration
-    : TYPEDEF total_type pointer_optional IDENTIFIER
+    : TYPEDEF total_type pointer_optional_with_const_optional IDENTIFIER
     | TYPEDEF enum_declaration IDENTIFIER
     | TYPEDEF struct_or_union_declaration IDENTIFIER
+    ;
+
+const_optional
+    : CONST
+    | epsilon
     ;
 
 enum_declaration
@@ -66,29 +79,40 @@ struct_or_union_member_list_prime
     ;
 
 variable_declarations_and_no_assignments
-    : total_type pointer_optional IDENTIFIER array_optional variable_declarations_and_no_assignments_prime
+    : total_type pointer_optional_with_const_optional IDENTIFIER array_optional variable_declarations_and_no_assignments_prime
     ;
 
 variable_declarations_and_no_assignments_prime
-    : ',' pointer_optional IDENTIFIER array_optional variable_declarations_and_no_assignments_prime
+    : ',' pointer_optional_with_const_optional IDENTIFIER array_optional variable_declarations_and_no_assignments_prime
     | epsilon
     ;
 
 variable_declarations_and_optional_assignments
-    : total_type pointer_optional IDENTIFIER array_optional optional_assignment variable_declarations_and_optional_assignments_prime
+    : total_type pointer_optional_with_const_optional IDENTIFIER array variable_declarations_and_optional_assignments_prime
+    | total_type pointer_optional_with_const_optional IDENTIFIER optional_assignment variable_declarations_and_optional_assignments_prime
     ;
 
 variable_assignment
-    : IDENTIFIER array_optional assignment
+    : pointer_optional variable_expr assignment
+    ;
+
+variable_assignment_list
+    : variable_assignment variable_assignment_list_prime
+    ;
+
+variable_assignment_list_prime
+    : ',' variable_assignment_list
+    | epsilon
     ;
 
 variable_declarations_and_optional_assignments_prime
-    : ',' pointer_optional IDENTIFIER array_optional optional_assignment variable_declarations_and_optional_assignments_prime
+    : ',' pointer_optional_with_const_optional IDENTIFIER array variable_declarations_and_optional_assignments_prime
+    | ',' pointer_optional_with_const_optional IDENTIFIER optional_assignment variable_declarations_and_optional_assignments_prime
     | epsilon
     ;
 
 function_declaration
-    : total_type IDENTIFIER '(' argument_list ')' '{' scope_drop statement_prime return_statement scope_rise '}'
+    : total_type IDENTIFIER '(' argument_list ')' '{' scope_drop statement_prime scope_rise '}'
     ;
 
 argument_list
@@ -102,7 +126,26 @@ argument_list_prime
     ;
 
 argument
-    : total_type pointer_optional IDENTIFIER array_optional
+    : total_type pointer_optional_with_const_optional IDENTIFIER array_optional
+    ;
+
+forward_declaration
+    : total_type IDENTIFIER '(' forward_declaration_argument_list ')'
+    ;
+
+forward_declaration_argument_list
+    : forward_declaration_argument forward_declaration_argument_list_prime
+    | epsilon
+    ;
+
+forward_declaration_argument_list_prime
+    : ',' forward_declaration_argument
+    | epsilon
+    ;
+
+forward_declaration_argument
+    : total_type pointer_optional IDENTIFIER
+    | total_type pointer_optional
     ;
 
 identifier_optional
@@ -111,48 +154,37 @@ identifier_optional
     ;
 
 pointer_optional
-    : '*' pointer_optional_prime
+    : pointer
     | epsilon
     ;
 
-pointer_optional_prime
-    : '*' pointer_optional_prime
+pointer_optional_with_const_optional
+    : pointer CONST
+    | pointer
     | epsilon
     ;
 
 array_optional
-    : '[' constant_expr ']' array_optional_prime
-    | '[' ']' array_optional_prime
+    : '[' constant_expr ']' array_optional
     | epsilon
     ;
 
-array_optional_prime
-    : '[' constant_expr ']' array_optional_prime
-    | '[' ']' array_optional_prime
+array
+    : '[' constant_expr ']' array_prime
+    ;
+
+array_prime
+    : '[' constant_expr ']' array_prime
     | epsilon
     ;
 
-sizeof_expr
-    : SIZEOF '(' total_type ')'
-    | SIZEOF '(' IDENTIFIER ')'
-    ;
-
-statement_prime
-    : statement statement_prime
+"""
+array_optional
+    : '[' constant_expr ']' array_optional
+    | '[' ']' array_optional
     | epsilon
     ;
-
-statement
-    : compound_statement
-    | IDENTIFIER array_optional assignment ';'
-    | variable_declarations_and_optional_assignments ';'
-    | struct_or_union_declaration ';'
-    | enum_declaration ';'
-    ;
-
-compound_statement
-    : '{' scope_drop statement statement_prime scope_rise '}'
-    ;
+"""
 
 scope_rise
     : epsilon
@@ -162,14 +194,10 @@ scope_drop
     : epsilon
     ;
 
-return_statement
-    : RETURN expression ';'
-    ;
-
 total_type
-    : type_qualifier_list type
-    | struct_or_union IDENTIFIER
+    : struct_or_union IDENTIFIER
     | ENUM IDENTIFIER
+    | type_qualifier_list type
     ;
 
 type_qualifier_list
@@ -205,6 +233,11 @@ type
 
 assignment
     : assignment_operator expression
+    ;
+
+"""
+assignment
+    : assignment_operator expression
     | assignment_operator initializer
     ;
 
@@ -220,6 +253,7 @@ initializer_list_prime
     : ',' CONSTANT initializer_list_prime
     | epsilon
     ;
+"""
 
 optional_assignment
     : assignment
@@ -240,16 +274,6 @@ assignment_operator
 	| OR_ASSIGN
 	;
 
-cast_expression
-    : '(' total_type pointer_optional ')' expression
-    ;
-
-value
-    : plus_or_minus CONSTANT
-    | IDENTIFIER array_optional
-    | STRING_LITERAL
-    ;
-
 plus_or_minus
     : '+'
     | '-'
@@ -265,32 +289,22 @@ pointer_prime
     | epsilon
     ;
 
-expression
-   : term expression_prime
-   ;
-
-expression_prime
-    : '+' term expression_prime
-    | '-' term expression_prime
-    | epsilon
+address_or_deref
+    : '&'
+    | '*'
     ;
 
-term
-    : factor term_prime
+sizeof_expr
+    : SIZEOF '(' total_type pointer_optional ')'
+    | SIZEOF '(' factor ')'
     ;
 
-term_prime
-    : '*' factor term_prime
-    | '/' factor term_prime
-    | '%' factor term_prime
-    | epsilon
+cast_expression
+    : '(' total_type pointer_optional ')' factor
     ;
 
-factor
-    : cast_expression
-    | '(' expression ')'
-    | sizeof_expr
-    | value
+ternary_expression
+    : '(' expression ')' '?' expression ':' expression
     ;
 
 constant_expr
@@ -315,7 +329,7 @@ constant_term_prime
     ;
 
 constant_factor
-    : cast_expression
+    : constant_cast_expression
     | '(' constant_expr ')'
     | constant_value
     ;
@@ -323,4 +337,332 @@ constant_factor
 constant_value
     : CONSTANT
     | sizeof_expr
+    ;
+
+constant_cast_expression
+    : '(' total_type pointer_optional ')' constant_factor
+    ;
+
+"""
+variable_expr
+    : '(' variable_expr ')'
+    | inc_or_dec_or_neither IDENTIFIER variable_op variable_expr_prime
+    | inc_or_dec_or_neither IDENTIFIER variable_expr_prime
+    ;
+"""
+variable_expr
+    : '(' variable_expr ')'
+    | IDENTIFIER variable_op variable_expr_prime
+    | IDENTIFIER variable_expr_prime
+    ;
+
+inc_or_dec_or_neither
+    : INC_OP
+    | DEC_OP
+    | epsilon
+    ;
+
+variable_expr_prime
+    : variable_op variable_expr_prime
+    | variable_change_op variable_expr
+    | epsilon
+    ;
+
+variable_op
+    : '[' expression ']'
+    ;
+
+variable_change_op
+    : PTR_OP
+    | DOT_OP
+    ;
+
+function_call
+    : IDENTIFIER '(' call_argument_list ')'
+    ;
+
+call_argument_list
+    : call_argument call_argument_list_prime
+    | epsilon
+    ;
+
+call_argument_list_prime
+    : ',' call_argument call_argument_list_prime
+    | epsilon
+    ;
+
+call_argument
+    : expression
+    ;
+
+statement
+    : compound_statement
+    | variable_assignment_list ';'
+    | variable_declarations_and_optional_assignments ';'
+    | struct_or_union_declaration ';'
+    | enum_declaration ';'
+    | typedef_declaration ';'
+    | function_call ';'
+    | conditional_statement
+    | loop_statement
+    | jump_statement ';'
+    | labeled_statement
+    | return_statement ';'
+    | inc_or_dec variable_expr inc_or_dec_or_neither ';'
+    | inc_or_dec_or_neither variable_expr inc_or_dec ';'
+    | ';'
+    ;
+
+compound_statement
+    : '{' scope_drop statement statement_prime scope_rise '}'
+    ;
+
+statement_prime
+    : statement statement_prime
+    | epsilon
+    ;
+
+return_statement
+    : RETURN expression
+    | RETURN
+    ;
+
+conditional_statement
+	: IF '(' expression ')' statement ELSE statement
+    | IF '(' expression ')' statement
+	| SWITCH '(' expression ')' '{' switch_case_prime default_case_optional switch_case_prime '}'
+	;
+
+switch_case_prime
+    : CASE constant_expr ':' statement_prime switch_case_prime
+    | epsilon
+    ;
+
+default_case_optional
+    : DEFAULT ':' statement_prime
+    | epsilon
+    ;
+
+jump_statement
+	: GOTO IDENTIFIER
+	| CONTINUE
+	| BREAK
+	;
+
+labeled_statement
+	: IDENTIFIER ':' statement
+	;
+
+loop_statement
+	: WHILE '(' expression ')' statement
+	| DO statement WHILE '(' expression ')'
+	| FOR '(' optional_variable_declarations_and_optional_assignments ';' optional_expression ';' optional_for_loop_variable_assignment_list ')' statement
+	;
+
+optional_variable_declarations_and_optional_assignments
+    : variable_declarations_and_optional_assignments
+    | epsilon
+    ;
+
+optional_expression
+    : expression
+    | epsilon
+    ;
+
+optional_for_loop_variable_assignment_list
+    : for_loop_variable_assignment_list
+    | epsilon
+    ;
+
+for_loop_variable_assignment
+    : pointer_optional variable_expr assignment
+    | pointer_optional inc_or_dec variable_expr inc_or_dec_or_neither
+    | pointer_optional inc_or_dec_or_neither variable_expr inc_or_dec
+    ;
+
+inc_or_dec
+    : INC_OP
+    | DEC_OP
+    ;
+
+for_loop_variable_assignment_list
+    : for_loop_variable_assignment for_loop_variable_assignment_list_prime
+    ;
+
+for_loop_variable_assignment_list_prime
+    : ',' for_loop_variable_assignment_list
+    | epsilon
+    ;
+
+"""
+original was:
+
+expression
+    : term expression_prime
+    ;
+
+expression_prime
+    : '+' term expression_prime
+    | '-' term expression_prime
+    | epsilon
+    ;
+
+term
+    : factor term_prime
+    ;
+
+term_prime
+    : '*' factor term_prime
+    | '/' factor term_prime
+    | '%' factor term_prime
+    | epsilon
+    ;
+
+%token LEFT_OP RIGHT_OP 
+%token LOGICAL_NOT_OP LOGICAL_AND_OP LOGICAL_OR_OP BITWISE_AND_OP BITWISE_OR_OP BITWISE_XOR_OP BITWISE_NOT_OP
+%token LT_OP GT_OP LE_OP GE_OP EQ_OP NE_OP
+
+Precedence Levels (lower number is better):
+2	! ~	Logical NOT and bitwise NOT (LOGICAL_NOT_OP, BITWISE_NOT_OP)
+3	* / %	Multiplication, division, and remainder	Left-to-right ('*', '/', '%')
+4	+ -	Addition and subtraction ('+', '-')
+5	<< >>	Bitwise left shift and right shift (LEFT_OP, RIGHT_OP)
+6	< <= > >= (LT_OP, LE_OP, GT_OP, GE_OP)
+7	== !=	For relational = and ≠ respectively (EQ_OP, NE_OP)
+8	&	Bitwise AND (BITWISE_AND_OP)
+9	^	Bitwise XOR (BITWISE_XOR_OP)
+10	|	Bitwise OR (BITWISE_OR_OP)
+11	&&	Logical AND (LOGICAL_AND_OP)
+12	||	Logical OR (LOGICAL_OR_OP)
+"""
+
+expression
+    : inc_or_dec variable_expr inc_or_dec_or_neither 
+    | inc_or_dec_or_neither variable_expr inc_or_dec
+    | expression_precedence_12
+    ;
+
+expression_precedence_12
+    : expression_precedence_11 expression_precedence_12_prime
+    ;
+
+expression_precedence_12_prime
+    : LOGICAL_OR_OP expression_precedence_11 expression_precedence_12_prime
+    | epsilon
+    ;
+
+expression_precedence_11
+    : expression_precedence_10 expression_precedence_11_prime
+    ;
+
+expression_precedence_11_prime
+    : LOGICAL_AND_OP expression_precedence_10 expression_precedence_11_prime
+    | epsilon
+    ;
+
+expression_precedence_10
+    : expression_precedence_9 expression_precedence_10_prime
+    ;
+
+expression_precedence_10_prime
+    : BITWISE_OR_OP expression_precedence_9 expression_precedence_10_prime
+    | epsilon
+    ;
+
+expression_precedence_9
+    : expression_precedence_8 expression_precedence_9_prime
+    ;
+
+expression_precedence_9_prime
+    : BITWISE_XOR_OP expression_precedence_8 expression_precedence_9_prime
+    | epsilon
+    ;
+
+expression_precedence_8
+    : expression_precedence_7 expression_precedence_8_prime
+    ;
+
+expression_precedence_8_prime
+    : BITWISE_AND_OP expression_precedence_7 expression_precedence_8_prime
+    | epsilon
+    ;
+
+expression_precedence_7
+    : expression_precedence_6 expression_precedence_7_prime
+    ;
+
+expression_precedence_7_prime
+    : EQ_OP expression_precedence_6 expression_precedence_7_prime
+    | NE_OP expression_precedence_6 expression_precedence_7_prime
+    | epsilon
+    ;
+
+expression_precedence_6
+    : expression_precedence_5 expression_precedence_6_prime
+    ;
+
+expression_precedence_6_prime
+    : GT_OP expression_precedence_5 expression_precedence_6_prime
+    | GE_OP expression_precedence_5 expression_precedence_6_prime
+    | LT_OP expression_precedence_5 expression_precedence_6_prime
+    | LE_OP expression_precedence_5 expression_precedence_6_prime
+    | epsilon
+    ;
+
+expression_precedence_5
+    : expression_precedence_4 expression_precedence_5_prime
+    ;
+
+expression_precedence_5_prime
+    : LEFT_OP expression_precedence_4 expression_precedence_5_prime
+    | RIGHT_OP expression_precedence_4 expression_precedence_5_prime
+    | epsilon
+    ;
+
+expression_precedence_4
+    : expression_precedence_3 expression_precedence_4_prime
+    ;
+
+expression_precedence_4_prime
+    : '+' expression_precedence_3 expression_precedence_4_prime
+    | '-' expression_precedence_3 expression_precedence_4_prime
+    | epsilon
+    ;
+
+expression_precedence_3
+    : expression_precedence_2 expression_precedence_3_prime
+    ;
+
+expression_precedence_3_prime
+    : '*' expression_precedence_2 expression_precedence_3_prime
+    | '/' expression_precedence_2 expression_precedence_3_prime
+    | '%' expression_precedence_2 expression_precedence_3_prime
+    | epsilon
+    ;
+
+expression_precedence_2
+    : factor expression_precedence_2_prime
+    ;
+
+expression_precedence_2_prime
+    : LOGICAL_NOT_OP factor expression_precedence_2_prime
+    | BITWISE_NOT_OP factor expression_precedence_2_prime
+    | epsilon
+    ;
+
+factor
+    : cast_expression
+    | ternary_expression
+    | '(' variable_assignment ')'
+    | '(' expression ')'
+    | sizeof_expr
+    | address_or_deref factor
+    | value
+    ;
+
+value
+    : plus_or_minus CONSTANT
+    | STRING_LITERAL
+    | function_call
+    | variable_expr
     ;

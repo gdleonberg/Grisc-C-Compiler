@@ -194,12 +194,17 @@ class symbolTable:
                 print("Array expression is: " + str(array_expr))
 
                 # evaluate array expression
-                array_value = self.evaluate(array_expr)
+                if array_expr != []:
+                    array_value = self.evaluate(array_expr)
+                    print("Simplified array expression is: [" + str(array_value) + "]")
+                else:
+                    array_value = "empty"
+                    print("Simplified array expression is: [" + str(array_value) + "]")
 
-                print("Simplified array expression is: [" + array_value + "]")
 
 
             # if we find an assignment, we need to check cast types and variable names
+            # we also need to use initializer list length to calculate sizeof if there is one
             if self.tokens[currPos + incVal].rule == "assignment":
                 print("Assignment found!")
                 currDepth2 = self.tokens[currPos + incVal].depth
@@ -254,7 +259,7 @@ class symbolTable:
                 array_expr.append(temp_array_expr)
 
             else:
-                if self.tokens[currPos + incVal].value[0] is not None:
+                if (self.tokens[currPos + incVal].value[0] is not None) and (self.tokens[currPos + incVal].value[0] not in ['[', ']']):
                     array_expr.append(self.tokens[currPos + incVal].value[0])
                 #print("symbolTable.py line " + str(inspect.currentframe().f_lineno) + ": AST token " + str(currPos + incVal + 1) + ": " + str(self.tokens[currPos + incVal].value))
                 incVal += 1

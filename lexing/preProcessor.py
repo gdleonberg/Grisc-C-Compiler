@@ -1,3 +1,5 @@
+import sys
+import io
 import os
 import datetime
 import lexing.lexer as lexer
@@ -68,7 +70,17 @@ class preProcessor:
         #print(filename)
         tempSource = self.buildSource(inFile)
         #print(tempSource)
+        old_stdout = sys.stdout
+        new_stdout = io.StringIO()
+        sys.stdout = new_stdout
         tokens = lexer.lexer(tempSource, tempSource).lex()
+        sys.stdout = old_stdout
+        with open("logs/0_lexer.log", "w") as outFile:
+            outFile.write(new_stdout.getvalue())
+            for token in tokens:
+                outFile.write("{0:<60s}".format("'" + token[0] + "'") + " : " + "{0:<15s}".format(token[1])
+                            + " : " + "{0:<15s}".format(token[2]) + " : " +"{0:<15s}".format(token[3])
+                            + " : " + "{0:<15s}".format(token[4]) + "\n")
         
         tokenNum = 0
         while tokenNum != len(tokens):
@@ -142,7 +154,11 @@ class preProcessor:
                     while loopFlag:
                         loopFlag = False
                         #print("expanded macro: '" + expanded_macro + "'")
-                        localTokens = lexer.lexer([[expanded_macro, filename, defines["__LINE__"]]], self.buildSource(inFile)).lex()
+                        old_stdout = sys.stdout
+                        new_stdout = io.StringIO()
+                        sys.stdout = new_stdout
+                        localTokens = lexer.lexer([[expanded_macro, filename, defines["__LINE__"]]], self.buildSource(inFile)).lex()  
+                        sys.stdout = old_stdout
                         currLocalToken = 0
                         while currLocalToken != len(localTokens):
                             if (localTokens[currLocalToken][1] != "identifier") or (localTokens[currLocalToken][0] not in defines):
