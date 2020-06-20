@@ -133,9 +133,27 @@ int fake(int a,   char b)
 }
 */
 
+union foo
+{
+    int a, **b, * const c[12];
+    const int d;
+    int e;
+};
+
+struct bar
+{
+    char a[12];
+    int b;
+    union foo myFoo[2];
+};
+
 int main() 
 { 
-    char a ='A', b ='B'; 
+    const int * const number = 2, *numPtr = &number, val = 2;
+    const int num = 3;
+    const int *n = 5;
+    char a ='A', b ='B';
+    const char c, *d = &c; 
     char *const ptr = &a; 
     printf( "Value pointed to by ptr: %c\n", *ptr); 
     printf( "Address ptr is pointing to: %d\n\n", ptr); 

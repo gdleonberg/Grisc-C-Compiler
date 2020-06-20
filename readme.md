@@ -16,7 +16,10 @@
     * initializer lists
     * empty arrays (ie char *argv[] must be written as char **argv)
     * arrays must be declared and assigned in separate statements
+    * all type qualifiers must go before the type (ie "const int" is allowed but not "int const")
+    * only primitives are [bool, char, unsigned char, short, unsigned short, int, unsigned int, long, unsigned long, float, double]
 
   * Ternary statements are in the form "(expression) ? expression : expression", requiring parantheses for the condition
   * Adds C99-style single line comments using '//'
+  * Adds bool integral type from C99
   * Adds ability to declare variables anywhere, not just top of scope block

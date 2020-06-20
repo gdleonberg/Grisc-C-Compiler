@@ -16,7 +16,7 @@ class lexer:
         self.reserved_words = [
             "else",	"switch", "break", "double", "long",
             "case", "return", "char", "float", 
-            "short", "unsigned", "for", "signed", "void",
+            "short", "unsigned", "for", "void",
             "continue",	"goto",	"sizeof", "default", "if",	
             "while", "int", "struct", "double", "bool",
             "union", "const", "enum", "typedef", "do", "static"

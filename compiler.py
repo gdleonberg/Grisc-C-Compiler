@@ -1,4 +1,7 @@
+#!/usr/bin/python3
+
 import sys
+import os
 import io
 import lexing.preProcessor as preProcessor
 import lexing.lexer as lexer
@@ -14,12 +17,20 @@ old_stdout = sys.stdout
 
 # get command line arguments
 inFilename = sys.argv[1]
-outFilename = sys.argv[2]
-parserDebug = False
-if len(sys.argv) > 3:
-    parserDebug = True
+outFilename = "a.out"
+if len(sys.argv) > 2:
+    outFilename = sys.argv[2]
+parserDebug = True
+
+# make logs directory if it does not already exist, else delete old logs
+if not os.path.exists("logs"):
+    os.makedirs("logs")
+else:
+    os.system("rm logs/*")
 
 # generate parser from bnf
+sys.stdout = old_stdout
+print("Generating parser from BNF")
 try:
     genParser.generateFromBnf("autoGenParser.py", "grammars/grammar.bnf", parserDebug)
 except genParser.genParserError as e:
@@ -28,6 +39,8 @@ except genParser.genParserError as e:
 import parsing.autoGenParser as autoGenParser
 
 # resolve all includes and get final lexed program
+sys.stdout = old_stdout
+print("Lexing input source")
 try:
     tokens = preProcessor.preProcessor(inFilename).preProcess()
     with open("logs/1_preProcessedTokens.log", "w") as outFile:
@@ -84,6 +97,8 @@ if("failure" in parseStatus):
     exit(0)
 
 # make AST from CST
+sys.stdout = old_stdout
+print("Making AST from CST")
 ast = cstToAst.toAst(parseTree)
 new_stdout = io.StringIO()
 sys.stdout = new_stdout
@@ -101,12 +116,17 @@ with open("logs/5_AST_postorder.log", "w") as log:
     log.write(astText)
 
 # generate png of tree and hide tree too large warning
+old_stderr = sys.stderr
+sys.stdout = old_stdout
+print("Making image of AST")
 new_stderr = io.StringIO()
 sys.stderr = new_stderr
 graphVisualizer.visualize(ast, "logs/5_AST.png")
 sys.stderr = old_stderr
 
 # apply symbol table checking
+sys.stdout = old_stdout
+print("Applying symbol table checking")
 new_stdout = io.StringIO()
 sys.stdout = new_stdout
 mySymbolTable = symbolTable.symbolTable(ast)
@@ -114,8 +134,10 @@ try:
     mySymbolTable.addSymbols()
     symbolTableText = new_stdout.getvalue()
     with open("logs/6_symbolTable.log", "w") as log:
+        log.write("Begin Symbol Table Log")
         log.write(symbolTableText)
 except symbolTable.symbolTableError as e:
+#except Exception as e:
     sys.stdout = old_stdout
     print(e)
     symbolTableText = new_stdout.getvalue()

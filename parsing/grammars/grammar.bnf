@@ -3,7 +3,7 @@
 %token MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN ADD_ASSIGN SUB_ASSIGN LEFT_ASSIGN RIGHT_ASSIGN AND_ASSIGN XOR_ASSIGN OR_ASSIGN
 %token EOF
 %token STRUCT ENUM UNION
-%token SHORT LONG SIGNED UNSIGNED
+%token SHORT LONG UNSIGNED
 %token FLOAT DOUBLE VOID BOOL STATIC SIZEOF
 %token TYPEDEF CONST
 %token PTR_OP DOT_OP 
@@ -195,8 +195,8 @@ scope_drop
     ;
 
 total_type
-    : struct_or_union IDENTIFIER
-    | ENUM IDENTIFIER
+    : type_qualifier_list struct_or_union IDENTIFIER
+    | type_qualifier_list ENUM IDENTIFIER
     | type_qualifier_list type
     ;
 
@@ -211,10 +211,7 @@ type_qualifier_list_prime
     ;
 
 type_qualifier
-    : SHORT
-    | LONG
-    | SIGNED
-    | UNSIGNED
+    : UNSIGNED
     | STATIC
     | CONST
     ;
