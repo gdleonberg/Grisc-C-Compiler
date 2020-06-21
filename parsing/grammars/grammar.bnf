@@ -4,7 +4,7 @@
 %token EOF
 %token STRUCT ENUM UNION
 %token SHORT LONG UNSIGNED
-%token FLOAT DOUBLE VOID BOOL STATIC SIZEOF
+%token FLOAT DOUBLE VOID BOOL SIZEOF
 %token TYPEDEF CONST
 %token PTR_OP DOT_OP 
 %token IF ELSE DO WHILE FOR SWITCH CASE DEFAULT BREAK GOTO CONTINUE RETURN
@@ -50,14 +50,26 @@ enum_declaration
     ;
 
 enum_member_list
-    : IDENTIFIER '=' CONSTANT enum_member_list_prime
-    | IDENTIFIER enum_member_list_prime
+    : enum_member_with_assign enum_member_list_prime
+    | enum_member_without_assign enum_member_list_prime
     ;
 
 enum_member_list_prime
-    : ',' IDENTIFIER '=' CONSTANT enum_member_list_prime
-    | ',' IDENTIFIER enum_member_list_prime
+    : ',' enum_member_with_assign enum_member_list_prime
+    | ',' enum_member_without_assign enum_member_list_prime
     | epsilon
+    ;
+
+enum_member_with_assign
+    : IDENTIFIER enum_assign
+    ;
+
+enum_member_without_assign
+    : IDENTIFIER
+    ;
+
+enum_assign
+    : '=' CONSTANT
     ;
 
 struct_or_union
@@ -212,7 +224,6 @@ type_qualifier_list_prime
 
 type_qualifier
     : UNSIGNED
-    | STATIC
     | CONST
     ;
 

@@ -19,7 +19,7 @@ class lexer:
             "short", "unsigned", "for", "void",
             "continue",	"goto",	"sizeof", "default", "if",	
             "while", "int", "struct", "double", "bool",
-            "union", "const", "enum", "typedef", "do", "static"
+            "union", "const", "enum", "typedef", "do"
         ]
 
         self.punctuators = [

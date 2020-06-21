@@ -147,6 +147,17 @@ struct bar
     union foo myFoo[2];
 };
 
+enum days
+{
+    MONDAY = 1,
+    TUESDAY,
+    WEDNESDAY,
+    THURSDAY,
+    FRIDAY,
+    SATURDAY,
+    SUNDAY = 9
+};
+
 int main() 
 { 
     const int * const number = 2, *numPtr = &number, val = 2;

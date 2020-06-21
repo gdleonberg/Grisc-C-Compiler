@@ -3,10 +3,10 @@ import inspect
 from random import randint
 
 integrals = {"char" : 1, "int" : 4, "short" : 2, "long" : 4, "float" : 4, "double" : 8, "bool" : 1}
-type_qualifiers = ["unsigned", "static", "const"]
+type_qualifiers = ["unsigned", "const"]
 type_qualifiers_sorted = {
     "sign" : ["unsigned"],
-    "misc" : ["static", "const"]
+    "misc" : ["const"]
 }
 qualifiable_integrals = {
     "sign_misc" : ["char", "int", "short", "long"],
@@ -25,7 +25,6 @@ def list_is_unique(listIn):
 
 def dissectType(total_type):
     unsigned = False
-    static = False
     const = False
     constPtr = False
     type_tokens = total_type.split(" ")
@@ -34,8 +33,6 @@ def dissectType(total_type):
     if total_type.find(baseType) != 0:
         if "const" in total_type.split(baseType)[0].split(" "):
             const = True
-        if "static" in total_type.split(baseType)[0].split(" "):
-            static = True
         if "unsigned" in total_type.split(baseType)[0].split(" "):
             unsigned = True
 
@@ -43,7 +40,7 @@ def dissectType(total_type):
         if "const" in total_type[total_type.find(baseType) + len(baseType):].split(" "):
             constPtr = True
     
-    return baseType, const, constPtr, unsigned, static
+    return baseType, const, constPtr, unsigned
 
 class symbolTableError(Exception):
     pass
@@ -52,7 +49,7 @@ class Variable:
     def __init__(self, name, m_type, pointerDepth, arrayLen, symbolTable):
         self.name = name
         self.pointerDepth = int(pointerDepth)
-        self.type, self.const, self.constPtr, self.unsigned, self.static = dissectType(m_type)
+        self.type, self.const, self.constPtr, self.unsigned = dissectType(m_type)
         self.arrayLen = int(arrayLen)
         self.size = symbolTable.definitions[self.type].size
         if pointerDepth > 0:
@@ -61,7 +58,7 @@ class Variable:
             self.size *= self.arrayLen
 
     def toString(self):
-        return " ".join([val for val in [(self.static * "static"), (self.const * "const"), (self.unsigned * "unsigned"), self.type, (self.pointerDepth * '*'), (self.constPtr * "const"), self.name, ((self.arrayLen > 1) * ("[" + str(self.arrayLen) + "]")), "(size: " + str(self.size) + ")"] if val != ""])
+        return " ".join([val for val in [(self.const * "const"), (self.unsigned * "unsigned"), self.type, (self.pointerDepth * '*'), (self.constPtr * "const"), self.name, ((self.arrayLen > 1) * ("[" + str(self.arrayLen) + "]")), "(size: " + str(self.size) + ")"] if val != ""])
 
 class Integral:
     def __init__(self, m_type):

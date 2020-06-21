@@ -11,6 +11,7 @@
     * auto (unnecesarry)
     * register (only exists to guide compiler optimization)
     * extern
+    * static
     * volatile (due to lack of optimizations all variables are already treated as volatile)
     * varargs using ...
     * initializer lists
