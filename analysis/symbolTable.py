@@ -2,7 +2,7 @@ import copy
 import inspect
 from random import randint
 
-integrals = {"char" : 1, "int" : 4, "short" : 2, "long" : 4, "float" : 4, "double" : 8, "bool" : 1}
+integrals = {"char" : 1, "void" : 4, "int" : 4, "short" : 2, "long" : 4, "float" : 4, "double" : 8, "bool" : 1}
 type_qualifiers = ["unsigned", "const"]
 type_qualifiers_sorted = {
     "sign" : ["unsigned"],
@@ -13,12 +13,20 @@ qualifiable_integrals = {
     "misc" : ["bool", "float", "double"]
 }
 
-
 def list_is_unique(listIn):
     uniques = []
     for item in listIn:
         if item not in uniques:
             uniques.append(item)
+        else:
+            return False
+    return True
+
+def unique_value_dict(dictIn):
+    uniques = []
+    for key in dictIn:
+        if dictIn[key] not in uniques:
+            uniques.append(dictIn[key])
         else:
             return False
     return True
@@ -72,21 +80,12 @@ class Enum:
     def __init__(self, name, members):
         self.classType = "enum"
         self.name = name
-        self.options = options
+        self.members = members
         self.size = integrals["int"]
-
-        # first value is 0 if not defined, every subsequent value is previous + 1 if not defined
-        for i in range(0, len(self.members)):
-            if self.members[self.members.keys()[i]] is None:
-                if i == 0:
-                    self.members[self.members.keys()[i]] = 0
-                else:
-                    self.members[self.members.keys()[i]] = self.members[self.members.keys()[i - 1]] + 1
-
     def toString(self):
-        retStr = "enum " + self.name
-        for option in self.options:
-            retStr += "\t" + option + ": " + str(self.options[option]) + "\n"
+        retStr = "enum " + self.name + "\n"
+        for member in self.members:
+            retStr += "\t" + member + ": " + str(self.members[member]) + "\n"
         return retStr
 
 class Union:
@@ -123,12 +122,15 @@ class Struct:
         return retStr
 
 class Typedef:
-    def __init__(self, origType, newType):
+    def __init__(self, name, total_type):
         self.classType = "typedef"
-        self.orig = origType
-        self.new = newType
+        self.name = name
+        if isinstance(total_type, list):
+            self.total_type = total_type
+        else:
+            self.total_type = [total_type]
     def toString(self):
-        return " ".join(["typedef", self.orig, self.new])
+        return " ".join(["typedef", " ".join(self.total_type), self.name])
 
 def getTokenList(node):
     retTokens = []
@@ -183,9 +185,6 @@ class symbolTable:
             
         return True
 
-    # collect definitions as we encounter them
-    # check variables against definitions as we encounter them
-    # collect variables as encounter them
     def addSymbols(self):
 
         i = 0
@@ -205,8 +204,7 @@ class symbolTable:
             if incVal == 0:
                 incVal = 1
             i += incVal
-            
-        
+              
     def tryVariable(self, currPos, parseOnly=False):
 
         incVal = 0
@@ -247,6 +245,47 @@ class symbolTable:
         if len(total_type) == 0:
             raise symbolTableError("No total type!")
             return 0
+
+        # expand any typedefed names
+        newTotalType = []
+        typedefFlag = False
+        for word in total_type:
+            if word in self.definitions:
+                if isinstance(self.definitions[word], Typedef):
+                    newTotalType += self.definitions[word].total_type
+                    typedefFlag = True
+                else:
+                    newTotalType.append(word)
+            else:
+                newTotalType.append(word)
+        total_type = newTotalType
+
+        # check total_type to see if we need to preliminarily set pointer depth, const or constrPtr values
+        typedefConst = False
+        typedefConstPtr = False
+        typedefPtrDepth = 0
+        if typedefFlag:
+            for word in total_type:
+                if word == "*":
+                    typedefPtrDepth += 1
+                if (word == "const") and (typedefPtrDepth == 0):
+                    if typedefConst == True:
+                        raise symbolTableError("Too many const in typedef type!")
+                        return 0
+                    typedefConst = True
+                if (word == "const") and (typedefPtrDepth != 0):
+                    if typedefConstPtr == True:
+                        raise symbolTableError("Too many const ptr in typedef type!")
+                        return 0
+                    typedefConstPtr = True
+        ptrEncountered = False
+        temp = total_type
+        total_type = []
+        for word in temp:
+            if word == "*":
+                ptrEncountered = True
+            elif not((word == "const") and ptrEncountered):
+                total_type.append(word)
 
         print("Total type is: \"" + " ".join(total_type) + "\"")
 
@@ -326,10 +365,11 @@ class symbolTable:
                     # if identifier, check against defined variables or typedef
                     #if self.tokens[currPos + incVal].value[1] == "IDENTIFIER":
 
-                        # check if is declared variable or is enum value
+                        # check if is declared variable or is enum value or is a typedefed type
 
-                    # else if struct or enum, collect and then collect identifier and check against defined types
-                    #elif (self.tokens[currPos + incVal].value[0] == "enum") or ()
+                    # else if struct or enum or union, collect and then collect identifier and check against defined types
+                    #elif self.tokens[currPos + incVal].value[0] in ["struct", "enum", "union"]:
+                        #incVal += 1
 
                     # else advance to next token
                     #else:
@@ -339,8 +379,11 @@ class symbolTable:
                     
                 print("End assignment")
                     
-            print("Adding to variable list: " + str([pointer_depth, variable_name, array_value]))
-            variable_list.append([pointer_depth, variable_name, array_value, constPtr])
+            if constPtr and typedefConstPtr:
+                raise symbolTableError("Too many const ptr!")
+                return 0
+            print("Adding to variable list: " + str([pointer_depth + typedefPtrDepth, variable_name, array_value]))
+            variable_list.append([pointer_depth + typedefPtrDepth, variable_name, array_value, constPtr])
 
         
         # for all variables, add them to our symbol table
@@ -474,7 +517,7 @@ class symbolTable:
 
         return incVal
 
-    def tryUnion(self, currPos):
+    def tryUnion(self, currPos, parseOnly=False):
 
         incVal = 0
 
@@ -520,12 +563,15 @@ class symbolTable:
         for member in members:
             print(member.toString())
 
+        if parseOnly:
+            return Union(name, members), incVal
+
         self.definitions["union " + name] = Union(name, members)
         print("Adding " + self.definitions["union " + name].toString())
 
         return incVal
 
-    def tryStruct(self, currPos):
+    def tryStruct(self, currPos, parseOnly=False):
 
         incVal = 0
 
@@ -571,20 +617,137 @@ class symbolTable:
         for member in members:
             print(member.toString())
 
+        if parseOnly:
+            return Struct(name, members), incVal
+
         self.definitions["struct " + name] = Struct(name, members)
         print("Adding " + self.definitions["struct " + name].toString())
 
         return incVal
 
-    def tryEnum(self, currPos):
+    def tryEnum(self, currPos, parseOnly=False):
 
         incVal = 0
+
+        # rule enum_declaration
+        if self.tokens[currPos + incVal].rule != "enum_declaration":
+            return 0
+        incVal += 1
+
+        # value is enum
+        if self.tokens[currPos + incVal].value[0] != "enum":
+            raise symbolTableError("Invalid enum declaration!")
+            return 0
+        incVal += 1
+
+        # check for identifier and check uniqueness
+        name = "anonymous_identifier_" + str(randint(10000, 99999))
+        while name in self.anonymousNames:
+            name = "anonymous_identifier_" + str(randint(10000, 99999))
+        if self.tokens[currPos + incVal].rule == "identifier_optional":
+            name = self.tokens[currPos + incVal].value[0]
+            incVal += 1
+        else:
+            self.anonymousNames.append(name)
+        if name in self.definitions:
+            raise symbolTableError("Type name '" + name + "' already in use")
+            return 0
+
+        # collect enum members
+        print("Collecting members for enum " + name)
+        enumOptions = {}
+        currDepth = self.tokens[currPos + incVal].depth
+        currEnumVal = 0
+        incVal += 1
+        while self.tokens[currPos + incVal].depth >= currDepth:
+            identifier = self.tokens[currPos + incVal].value[0]
+            if self.tokens[currPos + incVal].rule == "enum_member_with_assign":
+                incVal += 1
+                identifier = self.tokens[currPos + incVal].value[0]
+                incVal += 3
+                currEnumVal = int(self.tokens[currPos + incVal].value[0])
+            incVal += 1
+            
+            value = currEnumVal
+            print("Found name: '" + identifier + "' with value: " + str(value))
+            if identifier in enumOptions.keys():
+                raise symbolTableError("Duplicate enum name " + identifier + "!")
+            if not unique_value_dict(enumOptions):
+                raise symbolTableError("Duplicate enum value " + str(value) + "!")
+
+            enumOptions[identifier] = currEnumVal
+
+            currEnumVal += 1
+
+        if parseOnly:
+            return Enum(name, enumOptions), incVal
+
+        self.definitions["enum " + name] = Enum(name, enumOptions)
+        print("Adding enum " + name + "\n" + self.definitions["enum " + name].toString())
 
         return incVal
 
     def tryTypedef(self, currPos):
 
         incVal = 0
+
+        if self.tokens[currPos + incVal].rule != "typedef_declaration":
+            return 0
+        incVal += 1
+
+        if self.tokens[currPos + incVal].value[1] != "TYPEDEF":
+            raise symbolTableError("Invalid typedef!")
+            return 0
+        incVal += 1
+        
+        # try struct, union, enum, total type
+        ret = None
+        for function in [self.tryStruct, self.tryUnion, self.tryEnum]:
+            ret = function(currPos + incVal, True)
+            if not isinstance(ret, tuple):
+                ret = None
+            else:
+                incVal += ret[1]
+                ret = ret[0]
+                break
+        
+        # try total type
+        total_type = None
+        if ret is None:
+            if self.tokens[currPos + incVal].rule == "total_type":
+                total_type = []
+                currDepth = self.tokens[currPos + incVal].depth
+                while (self.tokens[currPos + incVal].depth >= currDepth) and (self.tokens[currPos + incVal].rule != "typedef_declaration"):
+                    if self.tokens[currPos + incVal].value[0] is not None:
+                        total_type.append(self.tokens[currPos + incVal].value[0])
+                    incVal += 1
+            else:
+                raise symbolTableError("Unable to find type for typedef!")         
+
+        # get new name
+        identifier = self.tokens[currPos + incVal].value[0]
+        incVal += 1
+
+        if total_type is not None:
+            ret = Typedef(identifier, total_type)
+
+        self.definitions[identifier] = ret
+        print("Typedef " + identifier + " is:")
+        print(self.definitions[identifier].toString())
+
+        if not isinstance(ret, Typedef):
+            innerTypeName = ret.name
+            if isinstance(ret, Union):
+                innerTypeName = "union " + innerTypeName
+            elif isinstance(ret, Struct):
+                innerTypeName = "struct " + innerTypeName
+            elif isinstance(ret, Enum):
+                innerTypeName = "enum " + innerTypeName
+            else:
+                raise symbolTableError("Invalid type to typedef around!")
+            self.definitions[innerTypeName] = ret
+            print("Inner defined type is " + innerTypeName + " which is:")
+            print(self.definitions[innerTypeName].toString())
 
         return incVal
 
