@@ -95,7 +95,7 @@ class tokenConverter:
                     if "_hex" in token[1]:
                         token[0] = str(int(str(token[0]), 16))
                     elif "_oct" in token[1]:
-                        token[0] = str(int(str(token[0])[2:], 8))
+                        token[0] = str(int(str(token[0])[1:], 8))
                     elif "_bool" in token[1]:
                         if token[0] == "true":
                             token[0] = "1"
