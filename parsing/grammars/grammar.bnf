@@ -102,6 +102,11 @@ variable_declarations_and_no_assignments_prime
 variable_declarations_and_optional_assignments
     : total_type pointer_optional_with_const_optional IDENTIFIER array variable_declarations_and_optional_assignments_prime
     | total_type pointer_optional_with_const_optional IDENTIFIER optional_assignment variable_declarations_and_optional_assignments_prime
+    | total_type pointer_optional function_pointer optional_assignment variable_declarations_and_optional_assignments_prime
+    ;
+
+function_pointer
+    : '(' pointer IDENTIFIER ')' '(' forward_declaration_argument_list ')'
     ;
 
 variable_assignment
@@ -120,6 +125,7 @@ variable_assignment_list_prime
 variable_declarations_and_optional_assignments_prime
     : ',' pointer_optional_with_const_optional IDENTIFIER array variable_declarations_and_optional_assignments_prime
     | ',' pointer_optional_with_const_optional IDENTIFIER optional_assignment variable_declarations_and_optional_assignments_prime
+    | ',' pointer_optional function_pointer optional_assignment variable_declarations_and_optional_assignments_prime
     | epsilon
     ;
 
@@ -308,7 +314,7 @@ sizeof_expr
     ;
 
 cast_expression
-    : '(' total_type pointer_optional ')' factor
+    : '(' total_type pointer_optional ')' '(' factor ')'
     ;
 
 ternary_expression
@@ -387,6 +393,7 @@ variable_change_op
 
 function_call
     : IDENTIFIER '(' call_argument_list ')'
+    | '(' pointer IDENTIFIER ')' '(' call_argument_list ')'
     ;
 
 call_argument_list
@@ -416,8 +423,7 @@ statement
     | jump_statement ';'
     | labeled_statement
     | return_statement ';'
-    | inc_or_dec variable_expr inc_or_dec_or_neither ';'
-    | inc_or_dec_or_neither variable_expr inc_or_dec ';'
+    | expression ';'
     | ';'
     ;
 
@@ -465,6 +471,7 @@ loop_statement
 	: WHILE '(' expression ')' statement
 	| DO statement WHILE '(' expression ')'
 	| FOR '(' optional_variable_declarations_and_optional_assignments ';' optional_expression ';' optional_for_loop_variable_assignment_list ')' statement
+    | FOR '(' variable_assignment_list ';' optional_expression ';' optional_for_loop_variable_assignment_list ')' statement
 	;
 
 optional_variable_declarations_and_optional_assignments
@@ -662,10 +669,10 @@ factor
     : cast_expression
     | ternary_expression
     | '(' variable_assignment ')'
-    | '(' expression ')'
     | sizeof_expr
     | address_or_deref factor
     | value
+    | '(' expression ')'
     ;
 
 value
